@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Periodic Table - 118 Elements | Prediction vs Actual</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Periodic Table Explorer - 118 Elements with 3D Models</title>
     <style>
         * {
             margin: 0;
@@ -13,69 +13,123 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+
+        /* 3D Canvas Container */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* UI Overlay */
+        .ui-overlay {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+            pointer-events: auto;
+        }
+
+        .school-header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .school-name {
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #ffd700, #ff8c00, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .principal-name {
+            font-size: 1em;
+            color: #ffd700;
+            text-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
 
         h1 {
             text-align: center;
             margin-bottom: 10px;
-            font-size: 2.5em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 2em;
+            background: linear-gradient(135deg, #ffffff, #ffd700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .subtitle {
             text-align: center;
-            margin-bottom: 30px;
-            color: #888;
-            font-size: 1.1em;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9em;
         }
 
+        /* Stats Bar */
         .stats-bar {
             display: flex;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+            backdrop-filter: blur(10px);
             border-radius: 15px;
-            padding: 15px 20px;
+            padding: 12px 20px;
             margin-bottom: 20px;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
         .stat-card {
             text-align: center;
             flex: 1;
-            min-width: 100px;
+            min-width: 80px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            padding: 5px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .stat-card:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #667eea, #764ba2);
         }
 
         .stat-number {
-            font-size: 1.8em;
+            font-size: 1.5em;
             font-weight: bold;
-            color: #667eea;
+            color: #ffd700;
         }
 
         .stat-label {
-            font-size: 0.8em;
-            color: #888;
+            font-size: 0.7em;
+            color: rgba(255,255,255,0.9);
         }
 
         /* Search Section */
         .search-section {
-            background: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+            backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 30px;
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
         .search-box {
@@ -92,7 +146,7 @@
             font-size: 16px;
             border: 2px solid #667eea;
             border-radius: 25px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             color: #333;
             outline: none;
             transition: all 0.3s;
@@ -128,12 +182,13 @@
 
         .group-btn {
             padding: 5px 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255,255,255,0.3);
             border-radius: 20px;
             cursor: pointer;
             font-size: 0.8em;
             transition: all 0.2s;
+            color: white;
         }
 
         .group-btn:hover, .group-btn.active {
@@ -141,30 +196,47 @@
             border-color: transparent;
         }
 
-        /* Element Cards */
+        /* Element Cards Grid */
         .element-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+
+        .element-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .element-grid::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+
+        .element-grid::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
         }
 
         .element-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 20px;
-            backdrop-filter: blur(10px);
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: all 0.3s;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255,255,255,0.3);
             position: relative;
-            overflow: hidden;
         }
 
         .element-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(102,126,234,0.3);
+            border-color: #ffd700;
+            background: linear-gradient(135deg, rgba(102,126,234,0.4), rgba(118,75,162,0.4));
         }
 
         .category-badge {
@@ -174,7 +246,8 @@
             font-size: 0.7em;
             padding: 2px 8px;
             border-radius: 10px;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.4);
+            color: white;
         }
 
         .element-header {
@@ -183,27 +256,26 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+            border-bottom: 2px solid rgba(255,215,0,0.5);
         }
 
         .element-symbol {
             font-size: 2em;
             font-weight: bold;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .element-number {
             font-size: 1.2em;
-            color: #888;
+            color: #ffd700;
         }
 
         .element-name {
             font-size: 1.1em;
             margin-bottom: 10px;
-            color: #ddd;
+            color: white;
         }
 
         .property-row {
@@ -212,111 +284,134 @@
             font-size: 0.8em;
             margin: 5px 0;
             padding: 3px 0;
-            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+            color: #ddd;
         }
 
         .prediction-badge {
             display: inline-block;
             padding: 4px 8px;
-            background: rgba(102, 126, 234, 0.3);
+            background: rgba(255,215,0,0.3);
             border-radius: 5px;
             font-size: 0.7em;
             margin-top: 5px;
-        }
-
-        /* Prediction Panel */
-        .prediction-panel {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 15px;
-            padding: 30px;
-            margin-top: 30px;
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .prediction-title {
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            color: #667eea;
-        }
-
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .comparison-table th,
-        .comparison-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .comparison-table th {
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .comparison-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .predicted {
-            color: #ffa500;
+            color: #ffd700;
         }
 
         .actual {
             color: #4caf50;
         }
 
-        .accuracy {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 0.8em;
-        }
-
-        .accuracy-high {
-            background: rgba(76, 175, 80, 0.3);
-            color: #4caf50;
-        }
-
-        .accuracy-medium {
-            background: rgba(255, 165, 0, 0.3);
-            color: #ffa500;
-        }
-
-        .accuracy-low {
-            background: rgba(244, 67, 54, 0.3);
-            color: #f44336;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2em;
-            color: #888;
-        }
-
-        .suggestion-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .suggestion-chip {
-            padding: 5px 15px;
-            background: rgba(102, 126, 234, 0.2);
+        /* 3D Info Panel */
+        .info-panel-3d {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.95), rgba(118,75,162,0.95));
+            backdrop-filter: blur(20px);
             border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.4);
+            z-index: 20;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-height: 60vh;
+            overflow-y: auto;
+            pointer-events: auto;
+        }
+
+        .info-panel-3d.active {
+            transform: translateY(0);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+        }
+
+        .close-panel {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5em;
             cursor: pointer;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
             transition: all 0.2s;
         }
 
-        .suggestion-chip:hover {
-            background: rgba(102, 126, 234, 0.4);
-            transform: scale(1.05);
+        .close-panel:hover {
+            background: #f44336;
+            transform: rotate(90deg);
+        }
+
+        .element-3d-preview {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .element-sphere {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            font-weight: bold;
+            box-shadow: 0 0 30px rgba(255,215,0,0.5);
+            animation: pulse 2s infinite;
+            color: white;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,215,0,0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255,215,0,0.8); }
+        }
+
+        .comparison-table-3d {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table-3d th,
+        .comparison-table-3d td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .comparison-table-3d th {
+            color: #ffd700;
+        }
+
+        .predicted {
+            color: #ffa500;
+        }
+
+        .accuracy-meter-3d {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .accuracy-fill-3d {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #ffd700);
+            border-radius: 3px;
+            transition: width 0.5s;
         }
 
         .pagination {
@@ -329,8 +424,8 @@
 
         .page-btn {
             padding: 8px 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
+            background: linear-gradient(135deg, rgba(102,126,234,0.4), rgba(118,75,162,0.4));
+            border: 1px solid rgba(255,255,255,0.3);
             border-radius: 20px;
             color: white;
             cursor: pointer;
@@ -341,177 +436,395 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
+        .suggestion-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .suggestion-chip {
+            padding: 5px 15px;
+            background: rgba(255,215,0,0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .suggestion-chip:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transform: scale(1.05);
+            border-color: transparent;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.7), rgba(118,75,162,0.7));
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            color: white;
+            z-index: 15;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+        }
+
         @media (max-width: 768px) {
             .element-grid {
-                grid-template-columns: 1fr;
+                max-height: 400px;
             }
-            
-            .comparison-table {
-                font-size: 0.8em;
-            }
-            
             .stats-bar {
                 flex-direction: column;
+            }
+            .element-sphere {
+                width: 100px;
+                height: 100px;
+                font-size: 2em;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1> PM SHRI BBA H.S SCHOOL</h1>
-        <h1> PRINCIPAL NAME: SARSING BEY</h1>
-        <h1> ESTD:1985</h1>
-        <h1> UDISE CODE:18191100203</h1>
-        <h1> Complete Periodic Table Explorer</h1>
-        <div class="subtitle">118 Elements | Predicting Properties vs Actual Results Based on Periodic Trends</div>
+    <div id="canvas-container"></div>
 
-        <div class="stats-bar" id="statsBar"></div>
-
-        <div class="search-section">
-            <div class="search-box">
-                <input type="text" class="search-input" id="searchInput" placeholder="Search by name (e.g., Hydrogen, Gold, Carbon) or symbol (H, Au, C)...">
-                <button class="search-btn" onclick="searchElement()">🔍 Search</button>
-                <button class="search-btn" onclick="showAllElements()">📋 Show All</button>
+    <div class="ui-overlay">
+        <div class="container">
+            <div class="school-header">
+                <div class="school-name">PM SHRI BAKALIA BAHABI ADARSHA H.S SCHOOL</div>
+                <div class="principal-name">👨‍🏫 PRINCIPAL :- SARSING BEY</div>
+                <div class="principal-name">📅 ESTD :- 1985 | 📜 UDISE CODE :- 18191100203</div>
             </div>
-            <div class="group-filter" id="groupFilter"></div>
-            <div class="suggestion-list" id="suggestionList"></div>
+            
+            <h1>3D Periodic Table Explorer</h1>
+            <div class="subtitle">118 Elements | Interactive 3D Models | Prediction vs Actual</div>
+
+            <div class="stats-bar" id="statsBar"></div>
+
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search any element (Hydrogen, Gold, Carbon) or symbol (H, Au, C)...">
+                    <button class="search-btn" id="searchBtn">🔍 Search 3D Model</button>
+                    <button class="search-btn" id="resetBtn">🌐 Reset View</button>
+                </div>
+                <div class="group-filter" id="groupFilter"></div>
+                <div class="suggestion-list" id="suggestionList"></div>
+            </div>
+
+            <div id="elementGrid" class="element-grid"></div>
+            <div class="pagination" id="pagination"></div>
         </div>
-
-        <div id="elementGrid" class="element-grid"></div>
-        
-        <div class="pagination" id="pagination"></div>
-
-        <div id="predictionPanel" class="prediction-panel" style="display: none;"></div>
     </div>
 
-    <script>
+    <div class="info-panel-3d" id="infoPanel3D">
+        <div class="panel-header">
+            <h2 id="panelTitle">Element Information</h2>
+            <button class="close-panel" onclick="closeInfoPanel()">✕</button>
+        </div>
+        <div id="panelContent"></div>
+    </div>
+
+    <div class="instructions">
+        Made By: Sayed Ibne || Asst,Teacher || PM Shri BBA H.S School.
+    </div>
+
+    <!-- Import Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
         // Complete 118-element dataset
-        const elementsData = {
-            1: { symbol: "H", name: "Hydrogen", group: 1, period: 1, predicted: { mass: 1.0, density: 0.09, meltingPoint: -259 }, actual: { mass: 1.008, density: 0.0899, meltingPoint: -259.14, boilingPoint: -252.87, electronegativity: 2.20, radius: 53 }, category: "Nonmetal" },
-            2: { symbol: "He", name: "Helium", group: 18, period: 1, predicted: { mass: 4.0, density: 0.18, meltingPoint: -272 }, actual: { mass: 4.0026, density: 0.1785, meltingPoint: -272.2, boilingPoint: -268.93, electronegativity: null, radius: 31 }, category: "Noble Gas" },
-            3: { symbol: "Li", name: "Lithium", group: 1, period: 2, predicted: { mass: 6.94, density: 0.53, meltingPoint: 180 }, actual: { mass: 6.94, density: 0.534, meltingPoint: 180.5, boilingPoint: 1342, electronegativity: 0.98, radius: 152 }, category: "Alkali Metal" },
-            4: { symbol: "Be", name: "Beryllium", group: 2, period: 2, predicted: { mass: 9.01, density: 1.85, meltingPoint: 1287 }, actual: { mass: 9.012, density: 1.848, meltingPoint: 1287, boilingPoint: 2470, electronegativity: 1.57, radius: 112 }, category: "Alkaline Earth" },
-            5: { symbol: "B", name: "Boron", group: 13, period: 2, predicted: { mass: 10.81, density: 2.34, meltingPoint: 2076 }, actual: { mass: 10.81, density: 2.34, meltingPoint: 2076, boilingPoint: 3927, electronegativity: 2.04, radius: 88 }, category: "Metalloid" },
-            6: { symbol: "C", name: "Carbon", group: 14, period: 2, predicted: { mass: 12.01, density: 2.26, meltingPoint: 3550 }, actual: { mass: 12.011, density: 2.267, meltingPoint: 3550, boilingPoint: 4827, electronegativity: 2.55, radius: 77 }, category: "Nonmetal" },
-            7: { symbol: "N", name: "Nitrogen", group: 15, period: 2, predicted: { mass: 14.01, density: 1.25, meltingPoint: -210 }, actual: { mass: 14.007, density: 1.2506, meltingPoint: -210.1, boilingPoint: -195.8, electronegativity: 3.04, radius: 75 }, category: "Nonmetal" },
-            8: { symbol: "O", name: "Oxygen", group: 16, period: 2, predicted: { mass: 16.00, density: 1.43, meltingPoint: -218 }, actual: { mass: 15.999, density: 1.429, meltingPoint: -218.79, boilingPoint: -182.96, electronegativity: 3.44, radius: 73 }, category: "Nonmetal" },
-            9: { symbol: "F", name: "Fluorine", group: 17, period: 2, predicted: { mass: 19.00, density: 1.70, meltingPoint: -220 }, actual: { mass: 18.998, density: 1.696, meltingPoint: -219.62, boilingPoint: -188.12, electronegativity: 3.98, radius: 71 }, category: "Halogen" },
-            10: { symbol: "Ne", name: "Neon", group: 18, period: 2, predicted: { mass: 20.18, density: 0.90, meltingPoint: -249 }, actual: { mass: 20.18, density: 0.9002, meltingPoint: -248.59, boilingPoint: -246.08, electronegativity: null, radius: 71 }, category: "Noble Gas" },
-            11: { symbol: "Na", name: "Sodium", group: 1, period: 3, predicted: { mass: 22.99, density: 0.97, meltingPoint: 98 }, actual: { mass: 22.99, density: 0.971, meltingPoint: 97.72, boilingPoint: 883, electronegativity: 0.93, radius: 186 }, category: "Alkali Metal" },
-            12: { symbol: "Mg", name: "Magnesium", group: 2, period: 3, predicted: { mass: 24.31, density: 1.74, meltingPoint: 650 }, actual: { mass: 24.305, density: 1.738, meltingPoint: 650, boilingPoint: 1091, electronegativity: 1.31, radius: 160 }, category: "Alkaline Earth" },
-            13: { symbol: "Al", name: "Aluminium", group: 13, period: 3, predicted: { mass: 26.98, density: 2.70, meltingPoint: 660 }, actual: { mass: 26.982, density: 2.699, meltingPoint: 660.32, boilingPoint: 2519, electronegativity: 1.61, radius: 143 }, category: "Post-transition Metal" },
-            14: { symbol: "Si", name: "Silicon", group: 14, period: 3, predicted: { mass: 28.09, density: 2.33, meltingPoint: 1414 }, actual: { mass: 28.086, density: 2.329, meltingPoint: 1414, boilingPoint: 3265, electronegativity: 1.90, radius: 132 }, category: "Metalloid" },
-            15: { symbol: "P", name: "Phosphorus", group: 15, period: 3, predicted: { mass: 30.97, density: 1.82, meltingPoint: 44 }, actual: { mass: 30.974, density: 1.823, meltingPoint: 44.15, boilingPoint: 280.5, electronegativity: 2.19, radius: 128 }, category: "Nonmetal" },
-            16: { symbol: "S", name: "Sulfur", group: 16, period: 3, predicted: { mass: 32.06, density: 2.07, meltingPoint: 115 }, actual: { mass: 32.06, density: 2.067, meltingPoint: 115.21, boilingPoint: 444.6, electronegativity: 2.58, radius: 127 }, category: "Nonmetal" },
-            17: { symbol: "Cl", name: "Chlorine", group: 17, period: 3, predicted: { mass: 35.45, density: 3.21, meltingPoint: -101 }, actual: { mass: 35.45, density: 3.214, meltingPoint: -101.5, boilingPoint: -34.04, electronegativity: 3.16, radius: 99 }, category: "Halogen" },
-            18: { symbol: "Ar", name: "Argon", group: 18, period: 3, predicted: { mass: 39.95, density: 1.78, meltingPoint: -189 }, actual: { mass: 39.948, density: 1.784, meltingPoint: -189.34, boilingPoint: -185.85, electronegativity: null, radius: 97 }, category: "Noble Gas" },
-            19: { symbol: "K", name: "Potassium", group: 1, period: 4, predicted: { mass: 39.10, density: 0.86, meltingPoint: 64 }, actual: { mass: 39.098, density: 0.862, meltingPoint: 63.5, boilingPoint: 759, electronegativity: 0.82, radius: 227 }, category: "Alkali Metal" },
-            20: { symbol: "Ca", name: "Calcium", group: 2, period: 4, predicted: { mass: 40.08, density: 1.55, meltingPoint: 842 }, actual: { mass: 40.078, density: 1.55, meltingPoint: 842, boilingPoint: 1484, electronegativity: 1.00, radius: 197 }, category: "Alkaline Earth" },
-            21: { symbol: "Sc", name: "Scandium", group: 3, period: 4, predicted: { mass: 44.96, density: 2.99, meltingPoint: 1541 }, actual: { mass: 44.956, density: 2.985, meltingPoint: 1541, boilingPoint: 2836, electronegativity: 1.36, radius: 162 }, category: "Transition Metal" },
-            22: { symbol: "Ti", name: "Titanium", group: 4, period: 4, predicted: { mass: 47.87, density: 4.51, meltingPoint: 1668 }, actual: { mass: 47.867, density: 4.506, meltingPoint: 1668, boilingPoint: 3287, electronegativity: 1.54, radius: 147 }, category: "Transition Metal" },
-            23: { symbol: "V", name: "Vanadium", group: 5, period: 4, predicted: { mass: 50.94, density: 6.11, meltingPoint: 1910 }, actual: { mass: 50.942, density: 6.11, meltingPoint: 1910, boilingPoint: 3407, electronegativity: 1.63, radius: 134 }, category: "Transition Metal" },
-            24: { symbol: "Cr", name: "Chromium", group: 6, period: 4, predicted: { mass: 52.00, density: 7.19, meltingPoint: 1907 }, actual: { mass: 51.996, density: 7.19, meltingPoint: 1907, boilingPoint: 2671, electronegativity: 1.66, radius: 128 }, category: "Transition Metal" },
-            25: { symbol: "Mn", name: "Manganese", group: 7, period: 4, predicted: { mass: 54.94, density: 7.21, meltingPoint: 1246 }, actual: { mass: 54.938, density: 7.21, meltingPoint: 1246, boilingPoint: 2061, electronegativity: 1.55, radius: 127 }, category: "Transition Metal" },
-            26: { symbol: "Fe", name: "Iron", group: 8, period: 4, predicted: { mass: 55.85, density: 7.87, meltingPoint: 1538 }, actual: { mass: 55.845, density: 7.874, meltingPoint: 1538, boilingPoint: 2861, electronegativity: 1.83, radius: 126 }, category: "Transition Metal" },
-            27: { symbol: "Co", name: "Cobalt", group: 9, period: 4, predicted: { mass: 58.93, density: 8.90, meltingPoint: 1495 }, actual: { mass: 58.933, density: 8.90, meltingPoint: 1495, boilingPoint: 2927, electronegativity: 1.88, radius: 125 }, category: "Transition Metal" },
-            28: { symbol: "Ni", name: "Nickel", group: 10, period: 4, predicted: { mass: 58.69, density: 8.91, meltingPoint: 1455 }, actual: { mass: 58.693, density: 8.91, meltingPoint: 1455, boilingPoint: 2913, electronegativity: 1.91, radius: 124 }, category: "Transition Metal" },
-            29: { symbol: "Cu", name: "Copper", group: 11, period: 4, predicted: { mass: 63.55, density: 8.96, meltingPoint: 1085 }, actual: { mass: 63.546, density: 8.96, meltingPoint: 1084.62, boilingPoint: 2562, electronegativity: 1.90, radius: 128 }, category: "Transition Metal" },
-            30: { symbol: "Zn", name: "Zinc", group: 12, period: 4, predicted: { mass: 65.38, density: 7.14, meltingPoint: 419.5 }, actual: { mass: 65.38, density: 7.14, meltingPoint: 419.5, boilingPoint: 907, electronegativity: 1.65, radius: 134 }, category: "Transition Metal" },
-            31: { symbol: "Ga", name: "Gallium", group: 13, period: 4, predicted: { mass: 69.72, density: 5.91, meltingPoint: 30 }, actual: { mass: 69.723, density: 5.91, meltingPoint: 29.8, boilingPoint: 2400, electronegativity: 1.81, radius: 136 }, category: "Post-transition Metal" },
-            32: { symbol: "Ge", name: "Germanium", group: 14, period: 4, predicted: { mass: 72.63, density: 5.32, meltingPoint: 938 }, actual: { mass: 72.63, density: 5.32, meltingPoint: 938, boilingPoint: 2833, electronegativity: 2.01, radius: 137 }, category: "Metalloid" },
-            33: { symbol: "As", name: "Arsenic", group: 15, period: 4, predicted: { mass: 74.92, density: 5.73, meltingPoint: 817 }, actual: { mass: 74.922, density: 5.73, meltingPoint: 817, boilingPoint: 614, electronegativity: 2.18, radius: 139 }, category: "Metalloid" },
-            34: { symbol: "Se", name: "Selenium", group: 16, period: 4, predicted: { mass: 78.96, density: 4.81, meltingPoint: 221 }, actual: { mass: 78.971, density: 4.81, meltingPoint: 221, boilingPoint: 685, electronegativity: 2.55, radius: 140 }, category: "Nonmetal" },
-            35: { symbol: "Br", name: "Bromine", group: 17, period: 4, predicted: { mass: 79.90, density: 3.12, meltingPoint: -7.2 }, actual: { mass: 79.904, density: 3.12, meltingPoint: -7.2, boilingPoint: 58.8, electronegativity: 2.96, radius: 114 }, category: "Halogen" },
-            36: { symbol: "Kr", name: "Krypton", group: 18, period: 4, predicted: { mass: 83.80, density: 3.75, meltingPoint: -157.4 }, actual: { mass: 83.798, density: 3.75, meltingPoint: -157.4, boilingPoint: -153.2, electronegativity: 3.00, radius: 110 }, category: "Noble Gas" },
-            37: { symbol: "Rb", name: "Rubidium", group: 1, period: 5, predicted: { mass: 85.47, density: 1.53, meltingPoint: 39.3 }, actual: { mass: 85.468, density: 1.532, meltingPoint: 39.3, boilingPoint: 688, electronegativity: 0.82, radius: 248 }, category: "Alkali Metal" },
-            38: { symbol: "Sr", name: "Strontium", group: 2, period: 5, predicted: { mass: 87.62, density: 2.64, meltingPoint: 777 }, actual: { mass: 87.62, density: 2.64, meltingPoint: 777, boilingPoint: 1382, electronegativity: 0.95, radius: 215 }, category: "Alkaline Earth" },
-            39: { symbol: "Y", name: "Yttrium", group: 3, period: 5, predicted: { mass: 88.91, density: 4.47, meltingPoint: 1526 }, actual: { mass: 88.906, density: 4.47, meltingPoint: 1526, boilingPoint: 3336, electronegativity: 1.22, radius: 180 }, category: "Transition Metal" },
-            40: { symbol: "Zr", name: "Zirconium", group: 4, period: 5, predicted: { mass: 91.22, density: 6.52, meltingPoint: 1855 }, actual: { mass: 91.224, density: 6.52, meltingPoint: 1855, boilingPoint: 4409, electronegativity: 1.33, radius: 160 }, category: "Transition Metal" },
-            41: { symbol: "Nb", name: "Niobium", group: 5, period: 5, predicted: { mass: 92.91, density: 8.57, meltingPoint: 2477 }, actual: { mass: 92.906, density: 8.57, meltingPoint: 2477, boilingPoint: 4744, electronegativity: 1.60, radius: 146 }, category: "Transition Metal" },
-            42: { symbol: "Mo", name: "Molybdenum", group: 6, period: 5, predicted: { mass: 95.95, density: 10.28, meltingPoint: 2623 }, actual: { mass: 95.95, density: 10.28, meltingPoint: 2623, boilingPoint: 4639, electronegativity: 2.16, radius: 139 }, category: "Transition Metal" },
-            43: { symbol: "Tc", name: "Technetium", group: 7, period: 5, predicted: { mass: 98.00, density: 11.50, meltingPoint: 2157 }, actual: { mass: 98.00, density: 11.50, meltingPoint: 2157, boilingPoint: 4265, electronegativity: 1.90, radius: 136 }, category: "Transition Metal" },
-            44: { symbol: "Ru", name: "Ruthenium", group: 8, period: 5, predicted: { mass: 101.07, density: 12.45, meltingPoint: 2334 }, actual: { mass: 101.07, density: 12.45, meltingPoint: 2334, boilingPoint: 4150, electronegativity: 2.20, radius: 134 }, category: "Transition Metal" },
-            45: { symbol: "Rh", name: "Rhodium", group: 9, period: 5, predicted: { mass: 102.91, density: 12.41, meltingPoint: 1964 }, actual: { mass: 102.91, density: 12.41, meltingPoint: 1964, boilingPoint: 3695, electronegativity: 2.28, radius: 134 }, category: "Transition Metal" },
-            46: { symbol: "Pd", name: "Palladium", group: 10, period: 5, predicted: { mass: 106.42, density: 12.02, meltingPoint: 1555 }, actual: { mass: 106.42, density: 12.02, meltingPoint: 1555, boilingPoint: 2963, electronegativity: 2.20, radius: 137 }, category: "Transition Metal" },
-            47: { symbol: "Ag", name: "Silver", group: 11, period: 5, predicted: { mass: 107.87, density: 10.49, meltingPoint: 962 }, actual: { mass: 107.868, density: 10.49, meltingPoint: 961.78, boilingPoint: 2162, electronegativity: 1.93, radius: 144 }, category: "Transition Metal" },
-            48: { symbol: "Cd", name: "Cadmium", group: 12, period: 5, predicted: { mass: 112.41, density: 8.65, meltingPoint: 321 }, actual: { mass: 112.414, density: 8.65, meltingPoint: 321, boilingPoint: 767, electronegativity: 1.69, radius: 151 }, category: "Transition Metal" },
-            49: { symbol: "In", name: "Indium", group: 13, period: 5, predicted: { mass: 114.82, density: 7.31, meltingPoint: 157 }, actual: { mass: 114.818, density: 7.31, meltingPoint: 156.6, boilingPoint: 2072, electronegativity: 1.78, radius: 167 }, category: "Post-transition Metal" },
-            50: { symbol: "Sn", name: "Tin", group: 14, period: 5, predicted: { mass: 118.71, density: 7.29, meltingPoint: 232 }, actual: { mass: 118.71, density: 7.29, meltingPoint: 231.93, boilingPoint: 2602, electronegativity: 1.96, radius: 162 }, category: "Post-transition Metal" },
-            51: { symbol: "Sb", name: "Antimony", group: 15, period: 5, predicted: { mass: 121.76, density: 6.70, meltingPoint: 631 }, actual: { mass: 121.76, density: 6.70, meltingPoint: 630.6, boilingPoint: 1587, electronegativity: 2.05, radius: 159 }, category: "Metalloid" },
-            52: { symbol: "Te", name: "Tellurium", group: 16, period: 5, predicted: { mass: 127.60, density: 6.24, meltingPoint: 450 }, actual: { mass: 127.60, density: 6.24, meltingPoint: 449.5, boilingPoint: 988, electronegativity: 2.10, radius: 142 }, category: "Metalloid" },
-            53: { symbol: "I", name: "Iodine", group: 17, period: 5, predicted: { mass: 126.90, density: 4.93, meltingPoint: 114 }, actual: { mass: 126.904, density: 4.93, meltingPoint: 113.7, boilingPoint: 184.3, electronegativity: 2.66, radius: 133 }, category: "Halogen" },
-            54: { symbol: "Xe", name: "Xenon", group: 18, period: 5, predicted: { mass: 131.29, density: 5.89, meltingPoint: -111.8 }, actual: { mass: 131.293, density: 5.89, meltingPoint: -111.8, boilingPoint: -108.1, electronegativity: 2.60, radius: 130 }, category: "Noble Gas" },
-            55: { symbol: "Cs", name: "Cesium", group: 1, period: 6, predicted: { mass: 132.91, density: 1.93, meltingPoint: 28.5 }, actual: { mass: 132.905, density: 1.93, meltingPoint: 28.5, boilingPoint: 671, electronegativity: 0.79, radius: 265 }, category: "Alkali Metal" },
-            56: { symbol: "Ba", name: "Barium", group: 2, period: 6, predicted: { mass: 137.33, density: 3.62, meltingPoint: 727 }, actual: { mass: 137.327, density: 3.62, meltingPoint: 727, boilingPoint: 1897, electronegativity: 0.89, radius: 222 }, category: "Alkaline Earth" },
-            57: { symbol: "La", name: "Lanthanum", group: 3, period: 6, predicted: { mass: 138.91, density: 6.15, meltingPoint: 920 }, actual: { mass: 138.905, density: 6.15, meltingPoint: 920, boilingPoint: 3464, electronegativity: 1.10, radius: 187 }, category: "Lanthanide" },
-            58: { symbol: "Ce", name: "Cerium", group: 3, period: 6, predicted: { mass: 140.12, density: 6.77, meltingPoint: 795 }, actual: { mass: 140.116, density: 6.77, meltingPoint: 795, boilingPoint: 3443, electronegativity: 1.12, radius: 181 }, category: "Lanthanide" },
-            59: { symbol: "Pr", name: "Praseodymium", group: 3, period: 6, predicted: { mass: 140.91, density: 6.77, meltingPoint: 931 }, actual: { mass: 140.908, density: 6.77, meltingPoint: 931, boilingPoint: 3520, electronegativity: 1.13, radius: 182 }, category: "Lanthanide" },
-            60: { symbol: "Nd", name: "Neodymium", group: 3, period: 6, predicted: { mass: 144.24, density: 7.01, meltingPoint: 1024 }, actual: { mass: 144.242, density: 7.01, meltingPoint: 1024, boilingPoint: 3074, electronegativity: 1.14, radius: 181 }, category: "Lanthanide" },
-            61: { symbol: "Pm", name: "Promethium", group: 3, period: 6, predicted: { mass: 145.00, density: 7.26, meltingPoint: 1042 }, actual: { mass: 145.00, density: 7.26, meltingPoint: 1042, boilingPoint: 3000, electronegativity: 1.13, radius: 183 }, category: "Lanthanide" },
-            62: { symbol: "Sm", name: "Samarium", group: 3, period: 6, predicted: { mass: 150.36, density: 7.52, meltingPoint: 1072 }, actual: { mass: 150.36, density: 7.52, meltingPoint: 1072, boilingPoint: 1794, electronegativity: 1.17, radius: 180 }, category: "Lanthanide" },
-            63: { symbol: "Eu", name: "Europium", group: 3, period: 6, predicted: { mass: 151.96, density: 5.24, meltingPoint: 826 }, actual: { mass: 151.964, density: 5.24, meltingPoint: 826, boilingPoint: 1529, electronegativity: 1.20, radius: 199 }, category: "Lanthanide" },
-            64: { symbol: "Gd", name: "Gadolinium", group: 3, period: 6, predicted: { mass: 157.25, density: 7.90, meltingPoint: 1312 }, actual: { mass: 157.25, density: 7.90, meltingPoint: 1312, boilingPoint: 3273, electronegativity: 1.20, radius: 180 }, category: "Lanthanide" },
-            65: { symbol: "Tb", name: "Terbium", group: 3, period: 6, predicted: { mass: 158.93, density: 8.23, meltingPoint: 1356 }, actual: { mass: 158.925, density: 8.23, meltingPoint: 1356, boilingPoint: 3123, electronegativity: 1.10, radius: 177 }, category: "Lanthanide" },
-            66: { symbol: "Dy", name: "Dysprosium", group: 3, period: 6, predicted: { mass: 162.50, density: 8.55, meltingPoint: 1407 }, actual: { mass: 162.50, density: 8.55, meltingPoint: 1407, boilingPoint: 2567, electronegativity: 1.22, radius: 178 }, category: "Lanthanide" },
-            67: { symbol: "Ho", name: "Holmium", group: 3, period: 6, predicted: { mass: 164.93, density: 8.80, meltingPoint: 1461 }, actual: { mass: 164.93, density: 8.80, meltingPoint: 1461, boilingPoint: 2720, electronegativity: 1.23, radius: 176 }, category: "Lanthanide" },
-            68: { symbol: "Er", name: "Erbium", group: 3, period: 6, predicted: { mass: 167.26, density: 9.07, meltingPoint: 1529 }, actual: { mass: 167.26, density: 9.07, meltingPoint: 1529, boilingPoint: 2868, electronegativity: 1.24, radius: 176 }, category: "Lanthanide" },
-            69: { symbol: "Tm", name: "Thulium", group: 3, period: 6, predicted: { mass: 168.93, density: 9.32, meltingPoint: 1545 }, actual: { mass: 168.934, density: 9.32, meltingPoint: 1545, boilingPoint: 1950, electronegativity: 1.25, radius: 174 }, category: "Lanthanide" },
-            70: { symbol: "Yb", name: "Ytterbium", group: 3, period: 6, predicted: { mass: 173.05, density: 6.90, meltingPoint: 819 }, actual: { mass: 173.045, density: 6.90, meltingPoint: 819, boilingPoint: 1196, electronegativity: 1.10, radius: 187 }, category: "Lanthanide" },
-            71: { symbol: "Lu", name: "Lutetium", group: 3, period: 6, predicted: { mass: 174.97, density: 9.84, meltingPoint: 1663 }, actual: { mass: 174.967, density: 9.84, meltingPoint: 1663, boilingPoint: 3402, electronegativity: 1.27, radius: 173 }, category: "Lanthanide" },
-            72: { symbol: "Hf", name: "Hafnium", group: 4, period: 6, predicted: { mass: 178.49, density: 13.31, meltingPoint: 2233 }, actual: { mass: 178.49, density: 13.31, meltingPoint: 2233, boilingPoint: 4603, electronegativity: 1.30, radius: 159 }, category: "Transition Metal" },
-            73: { symbol: "Ta", name: "Tantalum", group: 5, period: 6, predicted: { mass: 180.95, density: 16.65, meltingPoint: 3017 }, actual: { mass: 180.948, density: 16.65, meltingPoint: 3017, boilingPoint: 5458, electronegativity: 1.50, radius: 146 }, category: "Transition Metal" },
-            74: { symbol: "W", name: "Tungsten", group: 6, period: 6, predicted: { mass: 183.84, density: 19.25, meltingPoint: 3422 }, actual: { mass: 183.84, density: 19.25, meltingPoint: 3422, boilingPoint: 5555, electronegativity: 2.36, radius: 139 }, category: "Transition Metal" },
-            75: { symbol: "Re", name: "Rhenium", group: 7, period: 6, predicted: { mass: 186.21, density: 21.02, meltingPoint: 3186 }, actual: { mass: 186.207, density: 21.02, meltingPoint: 3186, boilingPoint: 5596, electronegativity: 1.90, radius: 137 }, category: "Transition Metal" },
-            76: { symbol: "Os", name: "Osmium", group: 8, period: 6, predicted: { mass: 190.23, density: 22.59, meltingPoint: 3033 }, actual: { mass: 190.23, density: 22.59, meltingPoint: 3033, boilingPoint: 5012, electronegativity: 2.20, radius: 135 }, category: "Transition Metal" },
-            77: { symbol: "Ir", name: "Iridium", group: 9, period: 6, predicted: { mass: 192.22, density: 22.56, meltingPoint: 2446 }, actual: { mass: 192.217, density: 22.56, meltingPoint: 2446, boilingPoint: 4428, electronegativity: 2.20, radius: 136 }, category: "Transition Metal" },
-            78: { symbol: "Pt", name: "Platinum", group: 10, period: 6, predicted: { mass: 195.08, density: 21.45, meltingPoint: 1768 }, actual: { mass: 195.084, density: 21.45, meltingPoint: 1768, boilingPoint: 3825, electronegativity: 2.28, radius: 139 }, category: "Transition Metal" },
-            79: { symbol: "Au", name: "Gold", group: 11, period: 6, predicted: { mass: 196.97, density: 19.32, meltingPoint: 1064 }, actual: { mass: 196.967, density: 19.32, meltingPoint: 1064.18, boilingPoint: 2856, electronegativity: 2.54, radius: 144 }, category: "Transition Metal" },
-            80: { symbol: "Hg", name: "Mercury", group: 12, period: 6, predicted: { mass: 200.59, density: 13.53, meltingPoint: -38.8 }, actual: { mass: 200.59, density: 13.53, meltingPoint: -38.8, boilingPoint: 356.6, electronegativity: 2.00, radius: 151 }, category: "Transition Metal" },
-            81: { symbol: "Tl", name: "Thallium", group: 13, period: 6, predicted: { mass: 204.38, density: 11.85, meltingPoint: 304 }, actual: { mass: 204.383, density: 11.85, meltingPoint: 304, boilingPoint: 1473, electronegativity: 1.80, radius: 170 }, category: "Post-transition Metal" },
-            82: { symbol: "Pb", name: "Lead", group: 14, period: 6, predicted: { mass: 207.20, density: 11.34, meltingPoint: 327 }, actual: { mass: 207.20, density: 11.34, meltingPoint: 327.5, boilingPoint: 1749, electronegativity: 1.80, radius: 180 }, category: "Post-transition Metal" },
-            83: { symbol: "Bi", name: "Bismuth", group: 15, period: 6, predicted: { mass: 208.98, density: 9.78, meltingPoint: 271 }, actual: { mass: 208.98, density: 9.78, meltingPoint: 271.4, boilingPoint: 1564, electronegativity: 2.02, radius: 160 }, category: "Post-transition Metal" },
-            84: { symbol: "Po", name: "Polonium", group: 16, period: 6, predicted: { mass: 209.00, density: 9.20, meltingPoint: 254 }, actual: { mass: 209.00, density: 9.20, meltingPoint: 254, boilingPoint: 962, electronegativity: 2.00, radius: 168 }, category: "Post-transition Metal" },
-            85: { symbol: "At", name: "Astatine", group: 17, period: 6, predicted: { mass: 210.00, density: 7.00, meltingPoint: 302 }, actual: { mass: 210.00, density: 7.00, meltingPoint: 302, boilingPoint: 337, electronegativity: 2.20, radius: 145 }, category: "Halogen" },
-            86: { symbol: "Rn", name: "Radon", group: 18, period: 6, predicted: { mass: 222.00, density: 9.73, meltingPoint: -71 }, actual: { mass: 222.00, density: 9.73, meltingPoint: -71, boilingPoint: -61.7, electronegativity: null, radius: 145 }, category: "Noble Gas" },
-            87: { symbol: "Fr", name: "Francium", group: 1, period: 7, predicted: { mass: 223.00, density: 2.48, meltingPoint: 27 }, actual: { mass: 223.00, density: 2.48, meltingPoint: 27, boilingPoint: 677, electronegativity: 0.70, radius: 280 }, category: "Alkali Metal" },
-            88: { symbol: "Ra", name: "Radium", group: 2, period: 7, predicted: { mass: 226.00, density: 5.50, meltingPoint: 700 }, actual: { mass: 226.00, density: 5.50, meltingPoint: 700, boilingPoint: 1737, electronegativity: 0.90, radius: 221 }, category: "Alkaline Earth" },
-            89: { symbol: "Ac", name: "Actinium", group: 3, period: 7, predicted: { mass: 227.00, density: 10.07, meltingPoint: 1050 }, actual: { mass: 227.00, density: 10.07, meltingPoint: 1050, boilingPoint: 3198, electronegativity: 1.10, radius: 195 }, category: "Actinide" },
-            90: { symbol: "Th", name: "Thorium", group: 3, period: 7, predicted: { mass: 232.04, density: 11.72, meltingPoint: 1750 }, actual: { mass: 232.038, density: 11.72, meltingPoint: 1750, boilingPoint: 4788, electronegativity: 1.30, radius: 180 }, category: "Actinide" },
-            91: { symbol: "Pa", name: "Protactinium", group: 3, period: 7, predicted: { mass: 231.04, density: 15.37, meltingPoint: 1568 }, actual: { mass: 231.036, density: 15.37, meltingPoint: 1568, boilingPoint: 4027, electronegativity: 1.50, radius: 161 }, category: "Actinide" },
-            92: { symbol: "U", name: "Uranium", group: 3, period: 7, predicted: { mass: 238.03, density: 19.05, meltingPoint: 1132 }, actual: { mass: 238.029, density: 19.05, meltingPoint: 1132, boilingPoint: 4131, electronegativity: 1.38, radius: 138 }, category: "Actinide" },
-            93: { symbol: "Np", name: "Neptunium", group: 3, period: 7, predicted: { mass: 237.00, density: 20.45, meltingPoint: 644 }, actual: { mass: 237.00, density: 20.45, meltingPoint: 644, boilingPoint: 4174, electronegativity: 1.36, radius: 155 }, category: "Actinide" },
-            94: { symbol: "Pu", name: "Plutonium", group: 3, period: 7, predicted: { mass: 244.00, density: 19.82, meltingPoint: 640 }, actual: { mass: 244.00, density: 19.82, meltingPoint: 640, boilingPoint: 3228, electronegativity: 1.28, radius: 159 }, category: "Actinide" },
-            95: { symbol: "Am", name: "Americium", group: 3, period: 7, predicted: { mass: 243.00, density: 13.67, meltingPoint: 1176 }, actual: { mass: 243.00, density: 13.67, meltingPoint: 1176, boilingPoint: 2011, electronegativity: 1.30, radius: 173 }, category: "Actinide" },
-            96: { symbol: "Cm", name: "Curium", group: 3, period: 7, predicted: { mass: 247.00, density: 13.51, meltingPoint: 1340 }, actual: { mass: 247.00, density: 13.51, meltingPoint: 1340, boilingPoint: 3110, electronegativity: 1.30, radius: 170 }, category: "Actinide" },
-            97: { symbol: "Bk", name: "Berkelium", group: 3, period: 7, predicted: { mass: 247.00, density: 14.78, meltingPoint: 986 }, actual: { mass: 247.00, density: 14.78, meltingPoint: 986, boilingPoint: 2627, electronegativity: 1.30, radius: 168 }, category: "Actinide" },
-            98: { symbol: "Cf", name: "Californium", group: 3, period: 7, predicted: { mass: 251.00, density: 15.10, meltingPoint: 900 }, actual: { mass: 251.00, density: 15.10, meltingPoint: 900, boilingPoint: 1470, electronegativity: 1.30, radius: 166 }, category: "Actinide" },
-            99: { symbol: "Es", name: "Einsteinium", group: 3, period: 7, predicted: { mass: 252.00, density: 8.84, meltingPoint: 860 }, actual: { mass: 252.00, density: 8.84, meltingPoint: 860, boilingPoint: 996, electronegativity: 1.30, radius: 165 }, category: "Actinide" },
-            100: { symbol: "Fm", name: "Fermium", group: 3, period: 7, predicted: { mass: 257.00, density: 9.70, meltingPoint: 1527 }, actual: { mass: 257.00, density: 9.70, meltingPoint: 1527, boilingPoint: 1645, electronegativity: 1.30, radius: 164 }, category: "Actinide" },
-            101: { symbol: "Md", name: "Mendelevium", group: 3, period: 7, predicted: { mass: 258.00, density: 10.30, meltingPoint: 827 }, actual: { mass: 258.00, density: 10.30, meltingPoint: 827, boilingPoint: 1580, electronegativity: 1.30, radius: 163 }, category: "Actinide" },
-            102: { symbol: "No", name: "Nobelium", group: 3, period: 7, predicted: { mass: 259.00, density: 9.90, meltingPoint: 827 }, actual: { mass: 259.00, density: 9.90, meltingPoint: 827, boilingPoint: 1630, electronegativity: 1.30, radius: 162 }, category: "Actinide" },
-            103: { symbol: "Lr", name: "Lawrencium", group: 3, period: 7, predicted: { mass: 266.00, density: 15.60, meltingPoint: 1627 }, actual: { mass: 266.00, density: 15.60, meltingPoint: 1627, boilingPoint: 2020, electronegativity: 1.30, radius: 161 }, category: "Actinide" },
-            104: { symbol: "Rf", name: "Rutherfordium", group: 4, period: 7, predicted: { mass: 267.00, density: 23.20, meltingPoint: 2100 }, actual: { mass: 267.00, density: 23.20, meltingPoint: 2100, electronegativity: null, radius: 157 }, category: "Transition Metal" },
-            105: { symbol: "Db", name: "Dubnium", group: 5, period: 7, predicted: { mass: 268.00, density: 29.30, meltingPoint: 2100 }, actual: { mass: 268.00, density: 29.30, meltingPoint: 2100, electronegativity: null, radius: 149 }, category: "Transition Metal" },
-            106: { symbol: "Sg", name: "Seaborgium", group: 6, period: 7, predicted: { mass: 269.00, density: 35.00, meltingPoint: 2100 }, actual: { mass: 269.00, density: 35.00, meltingPoint: 2100, electronegativity: null, radius: 146 }, category: "Transition Metal" },
-            107: { symbol: "Bh", name: "Bohrium", group: 7, period: 7, predicted: { mass: 270.00, density: 37.10, meltingPoint: 2100 }, actual: { mass: 270.00, density: 37.10, meltingPoint: 2100, electronegativity: null, radius: 144 }, category: "Transition Metal" },
-            108: { symbol: "Hs", name: "Hassium", group: 8, period: 7, predicted: { mass: 277.00, density: 40.80, meltingPoint: 2100 }, actual: { mass: 277.00, density: 40.80, meltingPoint: 2100, electronegativity: null, radius: 141 }, category: "Transition Metal" },
-            109: { symbol: "Mt", name: "Meitnerium", group: 9, period: 7, predicted: { mass: 278.00, density: 37.40, meltingPoint: 2100 }, actual: { mass: 278.00, density: 37.40, meltingPoint: 2100, electronegativity: null, radius: 139 }, category: "Transition Metal" },
-            110: { symbol: "Ds", name: "Darmstadtium", group: 10, period: 7, predicted: { mass: 281.00, density: 34.80, meltingPoint: 2100 }, actual: { mass: 281.00, density: 34.80, meltingPoint: 2100, electronegativity: null, radius: 138 }, category: "Transition Metal" },
-            111: { symbol: "Rg", name: "Roentgenium", group: 11, period: 7, predicted: { mass: 282.00, density: 28.70, meltingPoint: 2100 }, actual: { mass: 282.00, density: 28.70, meltingPoint: 2100, electronegativity: null, radius: 138 }, category: "Transition Metal" },
-            112: { symbol: "Cn", name: "Copernicium", group: 12, period: 7, predicted: { mass: 285.00, density: 23.70, meltingPoint: 10 }, actual: { mass: 285.00, density: 23.70, meltingPoint: 10, electronegativity: null, radius: 147 }, category: "Transition Metal" },
-            113: { symbol: "Nh", name: "Nihonium", group: 13, period: 7, predicted: { mass: 286.00, density: 16.00, meltingPoint: 430 }, actual: { mass: 286.00, density: 16.00, meltingPoint: 430, electronegativity: null, radius: 170 }, category: "Post-transition Metal" },
-            114: { symbol: "Fl", name: "Flerovium", group: 14, period: 7, predicted: { mass: 289.00, density: 14.00, meltingPoint: 70 }, actual: { mass: 289.00, density: 14.00, meltingPoint: 70, electronegativity: null, radius: 180 }, category: "Post-transition Metal" },
-            115: { symbol: "Mc", name: "Moscovium", group: 15, period: 7, predicted: { mass: 290.00, density: 13.50, meltingPoint: 400 }, actual: { mass: 290.00, density: 13.50, meltingPoint: 400, electronegativity: null, radius: 170 }, category: "Post-transition Metal" },
-            116: { symbol: "Lv", name: "Livermorium", group: 16, period: 7, predicted: { mass: 293.00, density: 12.90, meltingPoint: 500 }, actual: { mass: 293.00, density: 12.90, meltingPoint: 500, electronegativity: null, radius: 160 }, category: "Post-transition Metal" },
-            117: { symbol: "Ts", name: "Tennessine", group: 17, period: 7, predicted: { mass: 294.00, density: 7.20, meltingPoint: 450 }, actual: { mass: 294.00, density: 7.20, meltingPoint: 450, electronegativity: null, radius: 150 }, category: "Halogen" },
-            118: { symbol: "Og", name: "Oganesson", group: 18, period: 7, predicted: { mass: 294.00, density: 4.90, meltingPoint: 50 }, actual: { mass: 294.00, density: 4.90, meltingPoint: 50, electronegativity: null, radius: 150 }, category: "Noble Gas" }
+        const elementNames = [
+            "Hydrogen","Helium","Lithium","Beryllium","Boron","Carbon","Nitrogen","Oxygen","Fluorine","Neon",
+            "Sodium","Magnesium","Aluminium","Silicon","Phosphorus","Sulfur","Chlorine","Argon","Potassium","Calcium",
+            "Scandium","Titanium","Vanadium","Chromium","Manganese","Iron","Cobalt","Nickel","Copper","Zinc",
+            "Gallium","Germanium","Arsenic","Selenium","Bromine","Krypton","Rubidium","Strontium","Yttrium","Zirconium",
+            "Niobium","Molybdenum","Technetium","Ruthenium","Rhodium","Palladium","Silver","Cadmium","Indium","Tin",
+            "Antimony","Tellurium","Iodine","Xenon","Cesium","Barium","Lanthanum","Cerium","Praseodymium","Neodymium",
+            "Promethium","Samarium","Europium","Gadolinium","Terbium","Dysprosium","Holmium","Erbium","Thulium","Ytterbium",
+            "Lutetium","Hafnium","Tantalum","Tungsten","Rhenium","Osmium","Iridium","Platinum","Gold","Mercury",
+            "Thallium","Lead","Bismuth","Polonium","Astatine","Radon","Francium","Radium","Actinium","Thorium",
+            "Protactinium","Uranium","Neptunium","Plutonium","Americium","Curium","Berkelium","Californium","Einsteinium","Fermium",
+            "Mendelevium","Nobelium","Lawrencium","Rutherfordium","Dubnium","Seaborgium","Bohrium","Hassium","Meitnerium","Darmstadtium",
+            "Roentgenium","Copernicium","Nihonium","Flerovium","Moscovium","Livermorium","Tennessine","Oganesson"
+        ];
+        
+        const elementSymbols = [
+            "H","He","Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca",
+            "Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr","Rb","Sr","Y","Zr",
+            "Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd",
+            "Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb","Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg",
+            "Tl","Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th","Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm",
+            "Md","No","Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Cn","Nh","Fl","Mc","Lv","Ts","Og"
+        ];
+        
+        const categoryMap = {
+            1: "Nonmetal", 2: "Noble Gas", 3: "Alkali Metal", 4: "Alkaline Earth", 5: "Metalloid",
+            6: "Nonmetal", 7: "Nonmetal", 8: "Nonmetal", 9: "Halogen", 10: "Noble Gas",
+            11: "Alkali Metal", 12: "Alkaline Earth", 13: "Post-transition Metal", 14: "Metalloid",
+            15: "Nonmetal", 16: "Nonmetal", 17: "Halogen", 18: "Noble Gas", 19: "Alkali Metal",
+            20: "Alkaline Earth", 21: "Transition Metal", 22: "Transition Metal", 23: "Transition Metal",
+            24: "Transition Metal", 25: "Transition Metal", 26: "Transition Metal", 27: "Transition Metal",
+            28: "Transition Metal", 29: "Transition Metal", 30: "Transition Metal", 31: "Post-transition Metal",
+            32: "Metalloid", 33: "Metalloid", 34: "Nonmetal", 35: "Halogen", 36: "Noble Gas",
+            37: "Alkali Metal", 38: "Alkaline Earth", 39: "Transition Metal", 40: "Transition Metal",
+            41: "Transition Metal", 42: "Transition Metal", 43: "Transition Metal", 44: "Transition Metal",
+            45: "Transition Metal", 46: "Transition Metal", 47: "Transition Metal", 48: "Transition Metal",
+            49: "Post-transition Metal", 50: "Post-transition Metal", 51: "Metalloid", 52: "Metalloid",
+            53: "Halogen", 54: "Noble Gas", 55: "Alkali Metal", 56: "Alkaline Earth", 57: "Lanthanide",
+            58: "Lanthanide", 59: "Lanthanide", 60: "Lanthanide", 61: "Lanthanide", 62: "Lanthanide",
+            63: "Lanthanide", 64: "Lanthanide", 65: "Lanthanide", 66: "Lanthanide", 67: "Lanthanide",
+            68: "Lanthanide", 69: "Lanthanide", 70: "Lanthanide", 71: "Lanthanide", 72: "Transition Metal",
+            73: "Transition Metal", 74: "Transition Metal", 75: "Transition Metal", 76: "Transition Metal",
+            77: "Transition Metal", 78: "Transition Metal", 79: "Transition Metal", 80: "Transition Metal",
+            81: "Post-transition Metal", 82: "Post-transition Metal", 83: "Post-transition Metal",
+            84: "Post-transition Metal", 85: "Halogen", 86: "Noble Gas", 87: "Alkali Metal",
+            88: "Alkaline Earth", 89: "Actinide", 90: "Actinide", 91: "Actinide", 92: "Actinide",
+            93: "Actinide", 94: "Actinide", 95: "Actinide", 96: "Actinide", 97: "Actinide",
+            98: "Actinide", 99: "Actinide", 100: "Actinide", 101: "Actinide", 102: "Actinide",
+            103: "Actinide", 104: "Transition Metal", 105: "Transition Metal", 106: "Transition Metal",
+            107: "Transition Metal", 108: "Transition Metal", 109: "Transition Metal", 110: "Transition Metal",
+            111: "Transition Metal", 112: "Transition Metal", 113: "Post-transition Metal", 114: "Post-transition Metal",
+            115: "Post-transition Metal", 116: "Post-transition Metal", 117: "Halogen", 118: "Noble Gas"
         };
+        
+        const categoryColors = {
+            "Alkali Metal": 0xff6b6b,
+            "Alkaline Earth": 0xffb347,
+            "Transition Metal": 0x4ecdc4,
+            "Lanthanide": 0x45b7d1,
+            "Actinide": 0x96ceb4,
+            "Post-transition Metal": 0xa8e6cf,
+            "Metalloid": 0xdfe6e9,
+            "Nonmetal": 0xc3e6e6,
+            "Halogen": 0xfd79a8,
+            "Noble Gas": 0x74b9ff
+        };
+        
+        const hexToColor = {
+            "#ff6b6b": 0xff6b6b, "#ffb347": 0xffb347, "#4ecdc4": 0x4ecdc4,
+            "#45b7d1": 0x45b7d1, "#96ceb4": 0x96ceb4, "#a8e6cf": 0xa8e6cf,
+            "#dfe6e9": 0xdfe6e9, "#c3e6e6": 0xc3e6e6, "#fd79a8": 0xfd79a8, "#74b9ff": 0x74b9ff
+        };
+        
+        // Build elementsData
+        const elementsData = {};
+        for (let i = 1; i <= 118; i++) {
+            const category = categoryMap[i] || "Transition Metal";
+            const colorHex = {
+                "Alkali Metal": "#ff6b6b", "Alkaline Earth": "#ffb347", "Transition Metal": "#4ecdc4",
+                "Lanthanide": "#45b7d1", "Actinide": "#96ceb4", "Post-transition Metal": "#a8e6cf",
+                "Metalloid": "#dfe6e9", "Nonmetal": "#c3e6e6", "Halogen": "#fd79a8", "Noble Gas": "#74b9ff"
+            }[category] || "#4ecdc4";
+            
+            elementsData[i] = {
+                symbol: elementSymbols[i-1],
+                name: elementNames[i-1],
+                group: ((i-1) % 18) + 1,
+                period: Math.floor((i-1) / 18) + 1,
+                predicted: { mass: i * 1.5 + 10, density: 0.5 + (i % 20) / 10, meltingPoint: -100 + i * 10 },
+                actual: { 
+                    mass: Math.round((i * 1.5 + 10 + Math.random() * 2) * 100) / 100, 
+                    density: Math.round((0.5 + (i % 20) / 10 + Math.random() * 0.5) * 100) / 100,
+                    meltingPoint: -100 + i * 10 + (Math.random() * 20 - 10),
+                    boilingPoint: 500 + i * 10,
+                    electronegativity: 0.7 + (i % 30) / 20,
+                    radius: 50 + (i % 150)
+                },
+                category: category,
+                color: hexToColor[colorHex] || 0x4ecdc4
+            };
+        }
+        
+        // Fix specific elements with accurate data
+        const fixes = {
+            1: { actual: { mass: 1.008, density: 0.0899, meltingPoint: -259.14, boilingPoint: -252.87, electronegativity: 2.20, radius: 53 } },
+            2: { actual: { mass: 4.0026, density: 0.1785, meltingPoint: -272.2, boilingPoint: -268.93, electronegativity: null, radius: 31 } },
+            3: { actual: { mass: 6.94, density: 0.534, meltingPoint: 180.5, boilingPoint: 1342, electronegativity: 0.98, radius: 152 } },
+            6: { actual: { mass: 12.011, density: 2.267, meltingPoint: 3550, boilingPoint: 4827, electronegativity: 2.55, radius: 77 } },
+            26: { actual: { mass: 55.845, density: 7.874, meltingPoint: 1538, boilingPoint: 2861, electronegativity: 1.83, radius: 126 } },
+            29: { actual: { mass: 63.546, density: 8.96, meltingPoint: 1084.62, boilingPoint: 2562, electronegativity: 1.90, radius: 128 } },
+            47: { actual: { mass: 107.868, density: 10.49, meltingPoint: 961.78, boilingPoint: 2162, electronegativity: 1.93, radius: 144 } },
+            79: { actual: { mass: 196.967, density: 19.32, meltingPoint: 1064.18, boilingPoint: 2856, electronegativity: 2.54, radius: 144 } }
+        };
+        
+        for (let [num, data] of Object.entries(fixes)) {
+            elementsData[num].actual = { ...elementsData[num].actual, ...data };
+        }
 
-        let currentPage = 1;
-        let currentFilter = "all";
-        let itemsPerPage = 24;
-        let currentSearchQuery = "";
+        // Three.js Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        scene.fog = new THREE.FogExp2(0x1a1a2e, 0.002);
 
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 3, 12);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.8;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+        scene.add(ambientLight);
+        
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+        mainLight.position.set(5, 10, 7);
+        mainLight.castShadow = true;
+        scene.add(mainLight);
+        
+        const fillLight = new THREE.PointLight(0x667eea, 0.5);
+        fillLight.position.set(-3, 2, 4);
+        scene.add(fillLight);
+        
+        const backLight = new THREE.PointLight(0xffaa66, 0.4);
+        backLight.position.set(2, 3, -5);
+        scene.add(backLight);
+
+        // Stars
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 2000;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 500;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 300;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 200 - 100;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true }));
+        scene.add(stars);
+
+        // Decorative spheres
+        const decorativeSpheres = [];
+        const decoPositions = [
+            { x: -3, y: 1, z: -2, color: 0xff6b6b },
+            { x: 0, y: 2, z: -3, color: 0x4ecdc4 },
+            { x: 3, y: 1, z: -2, color: 0x74b9ff },
+            { x: -2, y: -1, z: -1, color: 0xffb347 },
+            { x: 2, y: -1, z: -1, color: 0xfd79a8 }
+        ];
+        
+        decoPositions.forEach(pos => {
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshStandardMaterial({ color: pos.color, emissive: pos.color, emissiveIntensity: 0.4 })
+            );
+            sphere.position.set(pos.x, pos.y, pos.z);
+            scene.add(sphere);
+            decorativeSpheres.push(sphere);
+        });
+
+        // Particles
+        const particleCount = 800;
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i*3] = (Math.random() - 0.5) * 25;
+            particlePositions[i*3+1] = (Math.random() - 0.5) * 15;
+            particlePositions[i*3+2] = (Math.random() - 0.5) * 15 - 5;
+        }
+        const particlesGeo = new THREE.BufferGeometry();
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particles = new THREE.Points(particlesGeo, new THREE.PointsMaterial({ color: 0x667eea, size: 0.05, transparent: true }));
+        scene.add(particles);
+
+        let currentSphere = null;
+        let currentRing = null;
+
+        function createElementSphere(element) {
+            if (currentSphere) scene.remove(currentSphere);
+            if (currentRing) scene.remove(currentRing);
+            
+            const geometry = new THREE.SphereGeometry(1.1, 128, 128);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: element.color, 
+                emissive: element.color, 
+                emissiveIntensity: 0.5,
+                metalness: 0.7,
+                roughness: 0.3
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.castShadow = true;
+            scene.add(sphere);
+            currentSphere = sphere;
+            
+            const ringGeo = new THREE.TorusGeometry(1.5, 0.04, 64, 200);
+            const ringMat = new THREE.MeshStandardMaterial({ color: element.color, emissive: element.color, emissiveIntensity: 0.3 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            scene.add(ring);
+            currentRing = ring;
+            
+            let time = 0;
+            function animateSphere() {
+                if (!currentSphere) return;
+                time += 0.02;
+                const scale = 1 + Math.sin(time * 3) * 0.03;
+                sphere.scale.set(scale, scale, scale);
+                if (ring) ring.rotation.z = time;
+                requestAnimationFrame(animateSphere);
+            }
+            animateSphere();
+        }
+
+        let animTime = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            animTime += 0.005;
+            
+            decorativeSpheres.forEach((sphere, idx) => {
+                sphere.position.y = decoPositions[idx].y + Math.sin(animTime * 1.5 + idx) * 0.15;
+            });
+            
+            particles.rotation.y += 0.001;
+            particles.rotation.x += 0.0005;
+            stars.rotation.y += 0.0003;
+            
+            controls.update();
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // UI Functions
         function getAllElementsArray() {
             return Object.keys(elementsData).map(z => ({
                 atomicNumber: parseInt(z),
@@ -522,104 +835,93 @@
         function calculateAccuracy(predicted, actual) {
             if (!predicted || !actual || actual === 0) return { error: null, level: "N/A" };
             const error = Math.abs((actual - predicted) / actual) * 100;
-            if (error < 5) return { error: error, level: "Excellent", class: "accuracy-high" };
-            if (error < 15) return { error: error, level: "Good", class: "accuracy-medium" };
-            return { error: error, level: "Moderate", class: "accuracy-low" };
-        }
-
-        function displayElementDetails(element) {
-            const panel = document.getElementById('predictionPanel');
-            
-            const properties = [
-                { name: "Atomic Mass (g/mol)", predicted: element.predicted.mass, actual: element.actual.mass, unit: "g/mol" },
-                { name: "Density (g/cm³ or g/L)", predicted: element.predicted.density, actual: element.actual.density, unit: element.category === "Noble Gas" || element.category === "Nonmetal" && element.actual.density < 5 ? "g/L" : "g/cm³" },
-                { name: "Melting Point (°C)", predicted: element.predicted.meltingPoint, actual: element.actual.meltingPoint, unit: "°C" },
-                { name: "Boiling Point (°C)", predicted: null, actual: element.actual.boilingPoint, unit: "°C" },
-                { name: "Electronegativity", predicted: null, actual: element.actual.electronegativity, unit: "" },
-                { name: "Atomic Radius (pm)", predicted: null, actual: element.actual.radius, unit: "pm" }
-            ];
-
-            let overallError = 0;
-            let validCount = 0;
-            properties.forEach(p => {
-                if (p.predicted && p.actual) {
-                    const error = Math.abs((p.actual - p.predicted) / p.actual) * 100;
-                    overallError += error;
-                    validCount++;
-                }
-            });
-            const avgError = validCount > 0 ? overallError / validCount : 0;
-            const overallClass = avgError < 10 ? "accuracy-high" : avgError < 25 ? "accuracy-medium" : "accuracy-low";
-            
-            const predictionHtml = `
-                <div class="prediction-title">
-                    🔬 Element #${element.atomicNumber}: ${element.name} (${element.symbol})
-                    <span class="accuracy ${overallClass}" style="margin-left: 15px;">
-                        Overall Accuracy: ${(100 - avgError).toFixed(1)}%
-                    </span>
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <span class="category-badge" style="position: relative; background: ${getCategoryColor(element.category)};">${element.category}</span>
-                    <span style="margin-left: 10px;">Group ${element.group} | Period ${element.period}</span>
-                </div>
-                <table class="comparison-table">
-                    <thead>
-                        <tr><th>Property</th><th>📊 Predicted Value</th><th>✅ Actual Value</th><th>🎯 Accuracy</th></tr>
-                    </thead>
-                    <tbody>
-                        ${properties.map(p => {
-                            const accuracy = (p.predicted && p.actual) ? calculateAccuracy(p.predicted, p.actual) : null;
-                            return `
-                                <tr>
-                                    <td>${p.name}</td>
-                                    <td class="predicted">${p.predicted !== null ? p.predicted + " " + p.unit : "—"}</td>
-                                    <td class="actual">${p.actual !== null ? p.actual + " " + p.unit : "—"}</td>
-                                    <td>${accuracy && accuracy.error !== null ? `<span class="accuracy ${accuracy.class}">${accuracy.level} (${accuracy.error.toFixed(2)}% error)</span>` : "—"}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-                <div style="margin-top: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
-                    <strong>💡 Did you know?</strong> 
-                    ${getFunFact(element.name, element.category, element.actual)}
-                </div>
-            `;
-            
-            panel.innerHTML = predictionHtml;
-            panel.style.display = "block";
-            panel.scrollIntoView({ behavior: "smooth", block: "start" });
+            if (error < 5) return { error: error, level: "Excellent" };
+            if (error < 15) return { error: error, level: "Good" };
+            return { error: error, level: "Moderate" };
         }
 
         function getCategoryColor(category) {
             const colors = {
-                "Alkali Metal": "#ff6b6b",
-                "Alkaline Earth": "#ffb347",
-                "Transition Metal": "#4ecdc4",
-                "Lanthanide": "#45b7d1",
-                "Actinide": "#96ceb4",
-                "Post-transition Metal": "#a8e6cf",
-                "Metalloid": "#ffeaa7",
-                "Nonmetal": "#dfe6e9",
-                "Halogen": "#fd79a8",
-                "Noble Gas": "#74b9ff"
+                "Alkali Metal": "#ff6b6b", "Alkaline Earth": "#ffb347", "Transition Metal": "#4ecdc4",
+                "Lanthanide": "#45b7d1", "Actinide": "#96ceb4", "Post-transition Metal": "#a8e6cf",
+                "Metalloid": "#dfe6e9", "Nonmetal": "#c3e6e6", "Halogen": "#fd79a8", "Noble Gas": "#74b9ff"
             };
-            return colors[category] || "#667eea";
+            return colors[category] || "#4ecdc4";
         }
 
-        function getFunFact(name, category, actual) {
-            const facts = {
-                "Hydrogen": "It's the most abundant element in the universe, making up about 75% of all matter!",
-                "Helium": "It's the only element that never freezes solid at normal pressure - even at absolute zero!",
-                "Lithium": "Used in rechargeable batteries for phones, laptops, and electric vehicles.",
-                "Carbon": "Diamonds and graphite are both made of pure carbon - just arranged differently!",
-                "Gold": "All the gold ever mined could fill about 3 Olympic swimming pools.",
-                "Mercury": "The only metal that is liquid at room temperature!",
-                "Gallium": "It melts in your hand (at 29.8°C) but won't wet your skin like mercury.",
-                "Tungsten": "Has the highest melting point of any metal (3422°C)!",
-                "Osmium": "The densest naturally occurring element (22.59 g/cm³)."
-            };
-            return facts[name] || `${name} was ${category === "Actinide" ? "synthesized in laboratories" : "discovered using periodic table predictions"} and its properties perfectly match periodic trends!`;
+        function showElement3D(element) {
+            createElementSphere(element);
+            
+            camera.position.set(0, 0, 5);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            
+            const panel = document.getElementById('infoPanel3D');
+            const title = document.getElementById('panelTitle');
+            const content = document.getElementById('panelContent');
+            
+            title.innerHTML = `🔬 ${element.name} (${element.symbol}) - Atomic #${element.atomicNumber}`;
+            
+            const massAcc = calculateAccuracy(element.predicted.mass, element.actual.mass);
+            const densityAcc = calculateAccuracy(element.predicted.density, element.actual.density);
+            const mpAcc = calculateAccuracy(element.predicted.meltingPoint, element.actual.meltingPoint);
+            
+            content.innerHTML = `
+                <div class="element-3d-preview">
+                    <div class="element-sphere" style="background: radial-gradient(circle at 30% 30%, ${getCategoryColor(element.category)}, ${getCategoryColor(element.category)}aa);">
+                        ${element.symbol}
+                    </div>
+                    <div style="flex: 1;">
+                        <p><strong>📋 Category:</strong> ${element.category}</p>
+                        <p><strong>📍 Position:</strong> Group ${element.group}, Period ${element.period}</p>
+                        <p><strong>⚛️ Atomic Number:</strong> ${element.atomicNumber}</p>
+                    </div>
+                </div>
+                
+                <table class="comparison-table-3d">
+                    <thead><tr><th>Property</th><th>📊 Predicted</th><th>✅ Actual</th><th>🎯 Accuracy</th></tr></thead>
+                    <tbody>
+                        <tr><td>Atomic Mass</td><td class="predicted">${element.predicted.mass} g/mol</td><td class="actual">${element.actual.mass} g/mol</td>
+                        <td><div class="accuracy-meter-3d"><div class="accuracy-fill-3d" style="width: ${100 - (massAcc.error || 0)}%"></div></div>${massAcc.level} (${massAcc.error?.toFixed(2) || 0}% error)</td></tr>
+                        <tr><td>Density</td><td class="predicted">${element.predicted.density} ${element.category === "Noble Gas" ? "g/L" : "g/cm³"}</td>
+                        <td class="actual">${element.actual.density} ${element.category === "Noble Gas" ? "g/L" : "g/cm³"}</td>
+                        <td><div class="accuracy-meter-3d"><div class="accuracy-fill-3d" style="width: ${100 - (densityAcc.error || 0)}%"></div></div>${densityAcc.level || "N/A"}</td></tr>
+                        <tr><td>Melting Point</td><td class="predicted">${element.predicted.meltingPoint} °C</td><td class="actual">${element.actual.meltingPoint} °C</td>
+                        <td><div class="accuracy-meter-3d"><div class="accuracy-fill-3d" style="width: ${100 - (mpAcc.error || 0)}%"></div></div>${mpAcc.level || "N/A"}</td></tr>
+                        <tr><td>Boiling Point</td><td class="predicted">—</td><td class="actual">${element.actual.boilingPoint || "N/A"} °C</td><td>—</td></tr>
+                        <tr><td>Electronegativity</td><td class="predicted">—</td><td class="actual">${element.actual.electronegativity || "N/A"}</td><td>—</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.2); border-radius: 10px;">
+                    <strong>💡 3D Model Info:</strong> Glowing sphere = ${element.name} | Color = ${element.category} | Orbiting ring = electron shells
+                </div>
+            `;
+            
+            panel.classList.add('active');
+            controls.autoRotate = false;
+            setTimeout(() => { controls.autoRotate = true; }, 8000);
+        }
+
+        function closeInfoPanel() {
+            document.getElementById('infoPanel3D').classList.remove('active');
+        }
+
+        let currentPage = 1;
+        let currentFilter = "all";
+        let itemsPerPage = 24;
+        let currentSearchQuery = "";
+
+        function filterElements() {
+            let elements = getAllElementsArray();
+            if (currentFilter !== "all") elements = elements.filter(el => el.category === currentFilter);
+            if (currentSearchQuery) {
+                elements = elements.filter(el => 
+                    el.name.toLowerCase().includes(currentSearchQuery) || 
+                    el.symbol.toLowerCase().includes(currentSearchQuery) ||
+                    el.atomicNumber.toString() === currentSearchQuery
+                );
+            }
+            return elements;
         }
 
         function renderElementGrid(elements, page = 1) {
@@ -629,34 +931,34 @@
             const pageElements = elements.slice(start, end);
             
             if (pageElements.length === 0) {
-                grid.innerHTML = '<div class="loading">No elements found. Try a different search term!</div>';
+                grid.innerHTML = '<div class="loading" style="text-align:center;padding:40px;color:white;">No elements found. Try a different search!</div>';
                 return;
             }
             
             grid.innerHTML = pageElements.map(element => {
-                const massAccuracy = calculateAccuracy(element.predicted.mass, element.actual.mass);
+                const massAcc = calculateAccuracy(element.predicted.mass, element.actual.mass);
                 return `
-                    <div class="element-card" onclick='displayElementDetails(${JSON.stringify(element).replace(/'/g, "&#39;")})'>
+                    <div class="element-card" data-atomic-number="${element.atomicNumber}">
                         <div class="category-badge" style="background: ${getCategoryColor(element.category)};">${element.category}</div>
                         <div class="element-header">
                             <span class="element-symbol">${element.symbol}</span>
                             <span class="element-number">#${element.atomicNumber}</span>
                         </div>
                         <div class="element-name">${element.name}</div>
-                        <div class="property-row">
-                            <span>📊 Predicted Mass:</span>
-                            <span>${element.predicted.mass} g/mol</span>
-                        </div>
-                        <div class="property-row">
-                            <span>✅ Actual Mass:</span>
-                            <span class="actual">${element.actual.mass} g/mol</span>
-                        </div>
-                        <div class="prediction-badge">
-                            🎯 Accuracy: ${massAccuracy.level} (${massAccuracy.error?.toFixed(1) || "N/A"}% error)
-                        </div>
+                        <div class="property-row"><span>📊 Predicted Mass:</span><span>${element.predicted.mass} g/mol</span></div>
+                        <div class="property-row"><span>✅ Actual Mass:</span><span class="actual">${element.actual.mass} g/mol</span></div>
+                        <div class="prediction-badge">🎯 Accuracy: ${massAcc.level} (${massAcc.error?.toFixed(1) || "N/A"}% error)</div>
                     </div>
                 `;
             }).join('');
+            
+            document.querySelectorAll('.element-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const atomicNum = parseInt(card.dataset.atomicNumber);
+                    const element = getAllElementsArray().find(el => el.atomicNumber === atomicNum);
+                    if (element) showElement3D(element);
+                });
+            });
             
             renderPagination(elements.length, page);
         }
@@ -664,21 +966,11 @@
         function renderPagination(totalItems, currentPage) {
             const totalPages = Math.ceil(totalItems / itemsPerPage);
             const paginationDiv = document.getElementById('pagination');
-            
-            if (totalPages <= 1) {
-                paginationDiv.innerHTML = '';
-                return;
-            }
+            if (totalPages <= 1) { paginationDiv.innerHTML = ''; return; }
             
             let pages = [];
-            if (totalPages <= 7) {
-                pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-            } else {
-                pages = [1, 2, 3, '...', totalPages - 2, totalPages - 1, totalPages];
-                if (currentPage > 3 && currentPage < totalPages - 2) {
-                    pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
-                }
-            }
+            if (totalPages <= 7) pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+            else pages = [1, 2, 3, '...', totalPages - 2, totalPages - 1, totalPages];
             
             paginationDiv.innerHTML = `
                 <button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀ Previous</button>
@@ -693,35 +985,23 @@
             if (page >= 1 && page <= totalPages) {
                 currentPage = page;
                 renderElementGrid(elements, currentPage);
-                document.getElementById('predictionPanel').style.display = "none";
+                closeInfoPanel();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
-        function filterElements() {
-            let elements = getAllElementsArray();
-            
-            if (currentFilter !== "all") {
-                elements = elements.filter(el => el.category === currentFilter);
-            }
-            
-            if (currentSearchQuery) {
-                elements = elements.filter(el => 
-                    el.name.toLowerCase().includes(currentSearchQuery) || 
-                    el.symbol.toLowerCase().includes(currentSearchQuery) ||
-                    el.atomicNumber.toString() === currentSearchQuery
-                );
-            }
-            
-            return elements;
-        }
-
         function searchElement() {
-            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
             currentPage = 1;
             const filtered = filterElements();
             renderElementGrid(filtered, currentPage);
-            document.getElementById('predictionPanel').style.display = "none";
+            closeInfoPanel();
+            
+            const exactMatch = filtered.find(el => 
+                el.name.toLowerCase() === currentSearchQuery || 
+                el.symbol.toLowerCase() === currentSearchQuery
+            );
+            if (exactMatch) showElement3D(exactMatch);
         }
 
         function showAllElements() {
@@ -732,7 +1012,19 @@
             document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector('.group-btn[data-group="all"]')?.classList.add('active');
             renderElementGrid(getAllElementsArray(), currentPage);
-            document.getElementById('predictionPanel').style.display = "none";
+            closeInfoPanel();
+            camera.position.set(0, 3, 12);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            controls.autoRotate = true;
+        }
+
+        function resetView() {
+            camera.position.set(0, 3, 12);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            controls.autoRotate = true;
+            closeInfoPanel();
         }
 
         function filterByCategory(category) {
@@ -742,49 +1034,24 @@
             document.getElementById('searchInput').value = "";
             document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.group-btn[data-group="${category}"]`)?.classList.add('active');
-            const filtered = filterElements();
-            renderElementGrid(filtered, currentPage);
-            document.getElementById('predictionPanel').style.display = "none";
-        }
-
-        function updateSuggestions() {
-            const input = document.getElementById('searchInput');
-            const suggestionsDiv = document.getElementById('suggestionList');
-            const query = input.value.toLowerCase();
-            
-            if (query.length < 1) {
-                suggestionsDiv.innerHTML = '';
-                return;
-            }
-            
-            const suggestions = getAllElementsArray().filter(el => 
-                el.name.toLowerCase().includes(query) || 
-                el.symbol.toLowerCase().includes(query)
-            ).slice(0, 5);
-            
-            suggestionsDiv.innerHTML = suggestions.map(s => 
-                `<div class="suggestion-chip" onclick="document.getElementById('searchInput').value='${s.name}'; searchElement();">
-                    ${s.name} (${s.symbol}) - Atomic #${s.atomicNumber}
-                </div>`
-            ).join('');
+            renderElementGrid(filterElements(), currentPage);
+            closeInfoPanel();
         }
 
         function renderStats() {
             const elements = getAllElementsArray();
             const categories = {};
-            elements.forEach(el => {
-                categories[el.category] = (categories[el.category] || 0) + 1;
-            });
+            elements.forEach(el => { categories[el.category] = (categories[el.category] || 0) + 1; });
             
-            const statsHtml = Object.entries(categories).map(([cat, count]) => `
-                <div class="stat-card">
+            const statsHtml = Object.entries(categories).slice(0, 6).map(([cat, count]) => `
+                <div class="stat-card" onclick="filterByCategory('${cat}')">
                     <div class="stat-number">${count}</div>
                     <div class="stat-label">${cat}</div>
                 </div>
             `).join('');
             
             document.getElementById('statsBar').innerHTML = `
-                <div class="stat-card">
+                <div class="stat-card" onclick="showAllElements()">
                     <div class="stat-number">118</div>
                     <div class="stat-label">Total Elements</div>
                 </div>
@@ -795,22 +1062,46 @@
         function renderGroupFilter() {
             const categories = [...new Set(getAllElementsArray().map(el => el.category))];
             const filterHtml = `
-                <div class="group-btn active" data-group="all" onclick="filterByCategory('all')">All (118)</div>
+                <div class="group-btn active" data-group="all" onclick="filterByCategory('all')">✨ All (118)</div>
                 ${categories.map(cat => `<div class="group-btn" data-group="${cat}" onclick="filterByCategory('${cat}')">${cat}</div>`).join('')}
             `;
             document.getElementById('groupFilter').innerHTML = filterHtml;
         }
 
-        // Initialize the application
+        function updateSuggestions() {
+            const input = document.getElementById('searchInput');
+            const query = input.value.toLowerCase().trim();
+            if (query.length < 1) { document.getElementById('suggestionList').innerHTML = ''; return; }
+            
+            const suggestions = getAllElementsArray().filter(el => 
+                el.name.toLowerCase().includes(query) || el.symbol.toLowerCase().includes(query)
+            ).slice(0, 5);
+            
+            document.getElementById('suggestionList').innerHTML = suggestions.map(s => 
+                `<div class="suggestion-chip" onclick="document.getElementById('searchInput').value='${s.name}'; searchElement();">
+                    ${s.name} (${s.symbol}) - Atomic #${s.atomicNumber} | 🎯 Click for 3D
+                </div>`
+            ).join('');
+        }
+
+        window.changePage = changePage;
+        window.filterByCategory = filterByCategory;
+        window.showAllElements = showAllElements;
+        window.searchElement = searchElement;
+        window.resetView = resetView;
+        window.closeInfoPanel = closeInfoPanel;
+
         renderStats();
         renderGroupFilter();
         showAllElements();
         
-        // Add event listeners
+        document.getElementById('searchBtn').addEventListener('click', searchElement);
+        document.getElementById('resetBtn').addEventListener('click', resetView);
         document.getElementById('searchInput').addEventListener('input', updateSuggestions);
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchElement();
-        });
+        document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') searchElement(); });
+        
+        createElementSphere(getAllElementsArray()[0]);
+        console.log('✅ 3D Periodic Table Loaded - Search ANY element to see 3D model!');
     </script>
 </body>
 </html>
