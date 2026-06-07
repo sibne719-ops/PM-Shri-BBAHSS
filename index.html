@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Periodic Table - Element Prediction vs Actual Results</title>
+    <title>Complete Periodic Table - 118 Elements | Prediction vs Actual</title>
     <style>
         * {
             margin: 0;
@@ -39,6 +39,34 @@
             margin-bottom: 30px;
             color: #888;
             font-size: 1.1em;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-card {
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
         }
 
         /* Search Section */
@@ -90,6 +118,29 @@
             transform: translateY(-2px);
         }
 
+        .group-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .group-btn {
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .group-btn:hover, .group-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+        }
+
         /* Element Cards */
         .element-grid {
             display: grid;
@@ -106,12 +157,24 @@
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
         }
 
         .element-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             background: rgba(255, 255, 255, 0.15);
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.7em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.5);
         }
 
         .element-header {
@@ -143,22 +206,32 @@
             color: #ddd;
         }
 
+        .property-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin: 5px 0;
+            padding: 3px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+
         .prediction-badge {
             display: inline-block;
             padding: 4px 8px;
             background: rgba(102, 126, 234, 0.3);
             border-radius: 5px;
-            font-size: 0.8em;
+            font-size: 0.7em;
             margin-top: 5px;
         }
 
         /* Prediction Panel */
         .prediction-panel {
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             border-radius: 15px;
             padding: 30px;
             margin-top: 30px;
             border: 1px solid rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .prediction-title {
@@ -214,6 +287,11 @@
             color: #ffa500;
         }
 
+        .accuracy-low {
+            background: rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
@@ -241,139 +319,266 @@
             transform: scale(1.05);
         }
 
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover, .page-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
         @media (max-width: 768px) {
             .element-grid {
                 grid-template-columns: 1fr;
             }
             
             .comparison-table {
-                font-size: 0.9em;
+                font-size: 0.8em;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>PM SHRI BAKALIA BAHANI ADARSHA H.S SCHOOL</h1>
-        <h1> Periodic Table Explorer</h1>
-        <div class="subtitle">Predicting Element Properties vs Actual Results</div>
+        <h1>⚛️ Complete Periodic Table Explorer</h1>
+        <div class="subtitle">118 Elements | Predicting Properties vs Actual Results Based on Periodic Trends</div>
+
+        <div class="stats-bar" id="statsBar"></div>
 
         <div class="search-section">
             <div class="search-box">
-                <input type="text" class="search-input" id="searchInput" placeholder="Search by name (e.g., Hydrogen, Helium, Lithium) or symbol (H, He, Li)...">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by name (e.g., Hydrogen, Gold, Carbon) or symbol (H, Au, C)...">
                 <button class="search-btn" onclick="searchElement()">🔍 Search</button>
                 <button class="search-btn" onclick="showAllElements()">📋 Show All</button>
             </div>
+            <div class="group-filter" id="groupFilter"></div>
             <div class="suggestion-list" id="suggestionList"></div>
         </div>
 
         <div id="elementGrid" class="element-grid"></div>
+        
+        <div class="pagination" id="pagination"></div>
 
         <div id="predictionPanel" class="prediction-panel" style="display: none;"></div>
     </div>
 
     <script>
-        // Complete periodic table data with predictions and actual properties
+        // Complete 118-element dataset
         const elementsData = {
-            1: { symbol: "H", name: "Hydrogen", group: 1, period: 1, predictedMass: 1.0, actualMass: 1.008, predictedDensity: 0.09, actualDensity: 0.0899, predictedMP: -259, actualMP: -259.14, category: "Nonmetal" },
-            2: { symbol: "He", name: "Helium", group: 18, period: 1, predictedMass: 4.0, actualMass: 4.0026, predictedDensity: 0.18, actualDensity: 0.1785, predictedMP: -272, actualMP: -272.2, category: "Noble Gas" },
-            3: { symbol: "Li", name: "Lithium", group: 1, period: 2, predictedMass: 6.94, actualMass: 6.94, predictedDensity: 0.53, actualDensity: 0.534, predictedMP: 180, actualMP: 180.5, category: "Alkali Metal" },
-            4: { symbol: "Be", name: "Beryllium", group: 2, period: 2, predictedMass: 9.01, actualMass: 9.012, predictedDensity: 1.85, actualDensity: 1.848, predictedMP: 1287, actualMP: 1287, category: "Alkaline Earth" },
-            5: { symbol: "B", name: "Boron", group: 13, period: 2, predictedMass: 10.81, actualMass: 10.81, predictedDensity: 2.34, actualDensity: 2.34, predictedMP: 2076, actualMP: 2076, category: "Metalloid" },
-            6: { symbol: "C", name: "Carbon", group: 14, period: 2, predictedMass: 12.01, actualMass: 12.011, predictedDensity: 2.26, actualDensity: 2.267, predictedMP: 3550, actualMP: 3550, category: "Nonmetal" },
-            7: { symbol: "N", name: "Nitrogen", group: 15, period: 2, predictedMass: 14.01, actualMass: 14.007, predictedDensity: 1.25, actualDensity: 1.2506, predictedMP: -210, actualMP: -210.1, category: "Nonmetal" },
-            8: { symbol: "O", name: "Oxygen", group: 16, period: 2, predictedMass: 16.00, actualMass: 15.999, predictedDensity: 1.43, actualDensity: 1.429, predictedMP: -218, actualMP: -218.79, category: "Nonmetal" },
-            9: { symbol: "F", name: "Fluorine", group: 17, period: 2, predictedMass: 19.00, actualMass: 18.998, predictedDensity: 1.70, actualDensity: 1.696, predictedMP: -220, actualMP: -219.62, category: "Halogen" },
-            10: { symbol: "Ne", name: "Neon", group: 18, period: 2, predictedMass: 20.18, actualMass: 20.18, predictedDensity: 0.90, actualDensity: 0.9002, predictedMP: -249, actualMP: -248.59, category: "Noble Gas" },
-            11: { symbol: "Na", name: "Sodium", group: 1, period: 3, predictedMass: 22.99, actualMass: 22.99, predictedDensity: 0.97, actualDensity: 0.971, predictedMP: 98, actualMP: 97.72, category: "Alkali Metal" },
-            12: { symbol: "Mg", name: "Magnesium", group: 2, period: 3, predictedMass: 24.31, actualMass: 24.305, predictedDensity: 1.74, actualDensity: 1.738, predictedMP: 650, actualMP: 650, category: "Alkaline Earth" },
-            13: { symbol: "Al", name: "Aluminium", group: 13, period: 3, predictedMass: 26.98, actualMass: 26.982, predictedDensity: 2.70, actualDensity: 2.699, predictedMP: 660, actualMP: 660.32, category: "Post-transition Metal" },
-            14: { symbol: "Si", name: "Silicon", group: 14, period: 3, predictedMass: 28.09, actualMass: 28.086, predictedDensity: 2.33, actualDensity: 2.329, predictedMP: 1414, actualMP: 1414, category: "Metalloid" },
-            15: { symbol: "P", name: "Phosphorus", group: 15, period: 3, predictedMass: 30.97, actualMass: 30.974, predictedDensity: 1.82, actualDensity: 1.823, predictedMP: 44, actualMP: 44.15, category: "Nonmetal" },
-            16: { symbol: "S", name: "Sulfur", group: 16, period: 3, predictedMass: 32.06, actualMass: 32.06, predictedDensity: 2.07, actualDensity: 2.067, predictedMP: 115, actualMP: 115.21, category: "Nonmetal" },
-            17: { symbol: "Cl", name: "Chlorine", group: 17, period: 3, predictedMass: 35.45, actualMass: 35.45, predictedDensity: 3.21, actualDensity: 3.214, predictedMP: -101, actualMP: -101.5, category: "Halogen" },
-            18: { symbol: "Ar", name: "Argon", group: 18, period: 3, predictedMass: 39.95, actualMass: 39.948, predictedDensity: 1.78, actualDensity: 1.784, predictedMP: -189, actualMP: -189.34, category: "Noble Gas" },
-            19: { symbol: "K", name: "Potassium", group: 1, period: 4, predictedMass: 39.10, actualMass: 39.098, predictedDensity: 0.86, actualDensity: 0.862, predictedMP: 64, actualMP: 63.5, category: "Alkali Metal" },
-            20: { symbol: "Ca", name: "Calcium", group: 2, period: 4, predictedMass: 40.08, actualMass: 40.078, predictedDensity: 1.55, actualDensity: 1.55, predictedMP: 842, actualMP: 842, category: "Alkaline Earth" },
-            26: { symbol: "Fe", name: "Iron", group: 8, period: 4, predictedMass: 55.85, actualMass: 55.845, predictedDensity: 7.87, actualDensity: 7.874, predictedMP: 1538, actualMP: 1538, category: "Transition Metal" },
-            29: { symbol: "Cu", name: "Copper", group: 11, period: 4, predictedMass: 63.55, actualMass: 63.546, predictedDensity: 8.96, actualDensity: 8.96, predictedMP: 1085, actualMP: 1084.62, category: "Transition Metal" },
-            47: { symbol: "Ag", name: "Silver", group: 11, period: 5, predictedMass: 107.87, actualMass: 107.868, predictedDensity: 10.49, actualDensity: 10.49, predictedMP: 962, actualMP: 961.78, category: "Transition Metal" },
-            79: { symbol: "Au", name: "Gold", group: 11, period: 6, predictedMass: 196.97, actualMass: 196.967, predictedDensity: 19.32, actualDensity: 19.32, predictedMP: 1064, actualMP: 1064.18, category: "Transition Metal" }
+            1: { symbol: "H", name: "Hydrogen", group: 1, period: 1, predicted: { mass: 1.0, density: 0.09, meltingPoint: -259 }, actual: { mass: 1.008, density: 0.0899, meltingPoint: -259.14, boilingPoint: -252.87, electronegativity: 2.20, radius: 53 }, category: "Nonmetal" },
+            2: { symbol: "He", name: "Helium", group: 18, period: 1, predicted: { mass: 4.0, density: 0.18, meltingPoint: -272 }, actual: { mass: 4.0026, density: 0.1785, meltingPoint: -272.2, boilingPoint: -268.93, electronegativity: null, radius: 31 }, category: "Noble Gas" },
+            3: { symbol: "Li", name: "Lithium", group: 1, period: 2, predicted: { mass: 6.94, density: 0.53, meltingPoint: 180 }, actual: { mass: 6.94, density: 0.534, meltingPoint: 180.5, boilingPoint: 1342, electronegativity: 0.98, radius: 152 }, category: "Alkali Metal" },
+            4: { symbol: "Be", name: "Beryllium", group: 2, period: 2, predicted: { mass: 9.01, density: 1.85, meltingPoint: 1287 }, actual: { mass: 9.012, density: 1.848, meltingPoint: 1287, boilingPoint: 2470, electronegativity: 1.57, radius: 112 }, category: "Alkaline Earth" },
+            5: { symbol: "B", name: "Boron", group: 13, period: 2, predicted: { mass: 10.81, density: 2.34, meltingPoint: 2076 }, actual: { mass: 10.81, density: 2.34, meltingPoint: 2076, boilingPoint: 3927, electronegativity: 2.04, radius: 88 }, category: "Metalloid" },
+            6: { symbol: "C", name: "Carbon", group: 14, period: 2, predicted: { mass: 12.01, density: 2.26, meltingPoint: 3550 }, actual: { mass: 12.011, density: 2.267, meltingPoint: 3550, boilingPoint: 4827, electronegativity: 2.55, radius: 77 }, category: "Nonmetal" },
+            7: { symbol: "N", name: "Nitrogen", group: 15, period: 2, predicted: { mass: 14.01, density: 1.25, meltingPoint: -210 }, actual: { mass: 14.007, density: 1.2506, meltingPoint: -210.1, boilingPoint: -195.8, electronegativity: 3.04, radius: 75 }, category: "Nonmetal" },
+            8: { symbol: "O", name: "Oxygen", group: 16, period: 2, predicted: { mass: 16.00, density: 1.43, meltingPoint: -218 }, actual: { mass: 15.999, density: 1.429, meltingPoint: -218.79, boilingPoint: -182.96, electronegativity: 3.44, radius: 73 }, category: "Nonmetal" },
+            9: { symbol: "F", name: "Fluorine", group: 17, period: 2, predicted: { mass: 19.00, density: 1.70, meltingPoint: -220 }, actual: { mass: 18.998, density: 1.696, meltingPoint: -219.62, boilingPoint: -188.12, electronegativity: 3.98, radius: 71 }, category: "Halogen" },
+            10: { symbol: "Ne", name: "Neon", group: 18, period: 2, predicted: { mass: 20.18, density: 0.90, meltingPoint: -249 }, actual: { mass: 20.18, density: 0.9002, meltingPoint: -248.59, boilingPoint: -246.08, electronegativity: null, radius: 71 }, category: "Noble Gas" },
+            11: { symbol: "Na", name: "Sodium", group: 1, period: 3, predicted: { mass: 22.99, density: 0.97, meltingPoint: 98 }, actual: { mass: 22.99, density: 0.971, meltingPoint: 97.72, boilingPoint: 883, electronegativity: 0.93, radius: 186 }, category: "Alkali Metal" },
+            12: { symbol: "Mg", name: "Magnesium", group: 2, period: 3, predicted: { mass: 24.31, density: 1.74, meltingPoint: 650 }, actual: { mass: 24.305, density: 1.738, meltingPoint: 650, boilingPoint: 1091, electronegativity: 1.31, radius: 160 }, category: "Alkaline Earth" },
+            13: { symbol: "Al", name: "Aluminium", group: 13, period: 3, predicted: { mass: 26.98, density: 2.70, meltingPoint: 660 }, actual: { mass: 26.982, density: 2.699, meltingPoint: 660.32, boilingPoint: 2519, electronegativity: 1.61, radius: 143 }, category: "Post-transition Metal" },
+            14: { symbol: "Si", name: "Silicon", group: 14, period: 3, predicted: { mass: 28.09, density: 2.33, meltingPoint: 1414 }, actual: { mass: 28.086, density: 2.329, meltingPoint: 1414, boilingPoint: 3265, electronegativity: 1.90, radius: 132 }, category: "Metalloid" },
+            15: { symbol: "P", name: "Phosphorus", group: 15, period: 3, predicted: { mass: 30.97, density: 1.82, meltingPoint: 44 }, actual: { mass: 30.974, density: 1.823, meltingPoint: 44.15, boilingPoint: 280.5, electronegativity: 2.19, radius: 128 }, category: "Nonmetal" },
+            16: { symbol: "S", name: "Sulfur", group: 16, period: 3, predicted: { mass: 32.06, density: 2.07, meltingPoint: 115 }, actual: { mass: 32.06, density: 2.067, meltingPoint: 115.21, boilingPoint: 444.6, electronegativity: 2.58, radius: 127 }, category: "Nonmetal" },
+            17: { symbol: "Cl", name: "Chlorine", group: 17, period: 3, predicted: { mass: 35.45, density: 3.21, meltingPoint: -101 }, actual: { mass: 35.45, density: 3.214, meltingPoint: -101.5, boilingPoint: -34.04, electronegativity: 3.16, radius: 99 }, category: "Halogen" },
+            18: { symbol: "Ar", name: "Argon", group: 18, period: 3, predicted: { mass: 39.95, density: 1.78, meltingPoint: -189 }, actual: { mass: 39.948, density: 1.784, meltingPoint: -189.34, boilingPoint: -185.85, electronegativity: null, radius: 97 }, category: "Noble Gas" },
+            19: { symbol: "K", name: "Potassium", group: 1, period: 4, predicted: { mass: 39.10, density: 0.86, meltingPoint: 64 }, actual: { mass: 39.098, density: 0.862, meltingPoint: 63.5, boilingPoint: 759, electronegativity: 0.82, radius: 227 }, category: "Alkali Metal" },
+            20: { symbol: "Ca", name: "Calcium", group: 2, period: 4, predicted: { mass: 40.08, density: 1.55, meltingPoint: 842 }, actual: { mass: 40.078, density: 1.55, meltingPoint: 842, boilingPoint: 1484, electronegativity: 1.00, radius: 197 }, category: "Alkaline Earth" },
+            21: { symbol: "Sc", name: "Scandium", group: 3, period: 4, predicted: { mass: 44.96, density: 2.99, meltingPoint: 1541 }, actual: { mass: 44.956, density: 2.985, meltingPoint: 1541, boilingPoint: 2836, electronegativity: 1.36, radius: 162 }, category: "Transition Metal" },
+            22: { symbol: "Ti", name: "Titanium", group: 4, period: 4, predicted: { mass: 47.87, density: 4.51, meltingPoint: 1668 }, actual: { mass: 47.867, density: 4.506, meltingPoint: 1668, boilingPoint: 3287, electronegativity: 1.54, radius: 147 }, category: "Transition Metal" },
+            23: { symbol: "V", name: "Vanadium", group: 5, period: 4, predicted: { mass: 50.94, density: 6.11, meltingPoint: 1910 }, actual: { mass: 50.942, density: 6.11, meltingPoint: 1910, boilingPoint: 3407, electronegativity: 1.63, radius: 134 }, category: "Transition Metal" },
+            24: { symbol: "Cr", name: "Chromium", group: 6, period: 4, predicted: { mass: 52.00, density: 7.19, meltingPoint: 1907 }, actual: { mass: 51.996, density: 7.19, meltingPoint: 1907, boilingPoint: 2671, electronegativity: 1.66, radius: 128 }, category: "Transition Metal" },
+            25: { symbol: "Mn", name: "Manganese", group: 7, period: 4, predicted: { mass: 54.94, density: 7.21, meltingPoint: 1246 }, actual: { mass: 54.938, density: 7.21, meltingPoint: 1246, boilingPoint: 2061, electronegativity: 1.55, radius: 127 }, category: "Transition Metal" },
+            26: { symbol: "Fe", name: "Iron", group: 8, period: 4, predicted: { mass: 55.85, density: 7.87, meltingPoint: 1538 }, actual: { mass: 55.845, density: 7.874, meltingPoint: 1538, boilingPoint: 2861, electronegativity: 1.83, radius: 126 }, category: "Transition Metal" },
+            27: { symbol: "Co", name: "Cobalt", group: 9, period: 4, predicted: { mass: 58.93, density: 8.90, meltingPoint: 1495 }, actual: { mass: 58.933, density: 8.90, meltingPoint: 1495, boilingPoint: 2927, electronegativity: 1.88, radius: 125 }, category: "Transition Metal" },
+            28: { symbol: "Ni", name: "Nickel", group: 10, period: 4, predicted: { mass: 58.69, density: 8.91, meltingPoint: 1455 }, actual: { mass: 58.693, density: 8.91, meltingPoint: 1455, boilingPoint: 2913, electronegativity: 1.91, radius: 124 }, category: "Transition Metal" },
+            29: { symbol: "Cu", name: "Copper", group: 11, period: 4, predicted: { mass: 63.55, density: 8.96, meltingPoint: 1085 }, actual: { mass: 63.546, density: 8.96, meltingPoint: 1084.62, boilingPoint: 2562, electronegativity: 1.90, radius: 128 }, category: "Transition Metal" },
+            30: { symbol: "Zn", name: "Zinc", group: 12, period: 4, predicted: { mass: 65.38, density: 7.14, meltingPoint: 419.5 }, actual: { mass: 65.38, density: 7.14, meltingPoint: 419.5, boilingPoint: 907, electronegativity: 1.65, radius: 134 }, category: "Transition Metal" },
+            31: { symbol: "Ga", name: "Gallium", group: 13, period: 4, predicted: { mass: 69.72, density: 5.91, meltingPoint: 30 }, actual: { mass: 69.723, density: 5.91, meltingPoint: 29.8, boilingPoint: 2400, electronegativity: 1.81, radius: 136 }, category: "Post-transition Metal" },
+            32: { symbol: "Ge", name: "Germanium", group: 14, period: 4, predicted: { mass: 72.63, density: 5.32, meltingPoint: 938 }, actual: { mass: 72.63, density: 5.32, meltingPoint: 938, boilingPoint: 2833, electronegativity: 2.01, radius: 137 }, category: "Metalloid" },
+            33: { symbol: "As", name: "Arsenic", group: 15, period: 4, predicted: { mass: 74.92, density: 5.73, meltingPoint: 817 }, actual: { mass: 74.922, density: 5.73, meltingPoint: 817, boilingPoint: 614, electronegativity: 2.18, radius: 139 }, category: "Metalloid" },
+            34: { symbol: "Se", name: "Selenium", group: 16, period: 4, predicted: { mass: 78.96, density: 4.81, meltingPoint: 221 }, actual: { mass: 78.971, density: 4.81, meltingPoint: 221, boilingPoint: 685, electronegativity: 2.55, radius: 140 }, category: "Nonmetal" },
+            35: { symbol: "Br", name: "Bromine", group: 17, period: 4, predicted: { mass: 79.90, density: 3.12, meltingPoint: -7.2 }, actual: { mass: 79.904, density: 3.12, meltingPoint: -7.2, boilingPoint: 58.8, electronegativity: 2.96, radius: 114 }, category: "Halogen" },
+            36: { symbol: "Kr", name: "Krypton", group: 18, period: 4, predicted: { mass: 83.80, density: 3.75, meltingPoint: -157.4 }, actual: { mass: 83.798, density: 3.75, meltingPoint: -157.4, boilingPoint: -153.2, electronegativity: 3.00, radius: 110 }, category: "Noble Gas" },
+            37: { symbol: "Rb", name: "Rubidium", group: 1, period: 5, predicted: { mass: 85.47, density: 1.53, meltingPoint: 39.3 }, actual: { mass: 85.468, density: 1.532, meltingPoint: 39.3, boilingPoint: 688, electronegativity: 0.82, radius: 248 }, category: "Alkali Metal" },
+            38: { symbol: "Sr", name: "Strontium", group: 2, period: 5, predicted: { mass: 87.62, density: 2.64, meltingPoint: 777 }, actual: { mass: 87.62, density: 2.64, meltingPoint: 777, boilingPoint: 1382, electronegativity: 0.95, radius: 215 }, category: "Alkaline Earth" },
+            39: { symbol: "Y", name: "Yttrium", group: 3, period: 5, predicted: { mass: 88.91, density: 4.47, meltingPoint: 1526 }, actual: { mass: 88.906, density: 4.47, meltingPoint: 1526, boilingPoint: 3336, electronegativity: 1.22, radius: 180 }, category: "Transition Metal" },
+            40: { symbol: "Zr", name: "Zirconium", group: 4, period: 5, predicted: { mass: 91.22, density: 6.52, meltingPoint: 1855 }, actual: { mass: 91.224, density: 6.52, meltingPoint: 1855, boilingPoint: 4409, electronegativity: 1.33, radius: 160 }, category: "Transition Metal" },
+            41: { symbol: "Nb", name: "Niobium", group: 5, period: 5, predicted: { mass: 92.91, density: 8.57, meltingPoint: 2477 }, actual: { mass: 92.906, density: 8.57, meltingPoint: 2477, boilingPoint: 4744, electronegativity: 1.60, radius: 146 }, category: "Transition Metal" },
+            42: { symbol: "Mo", name: "Molybdenum", group: 6, period: 5, predicted: { mass: 95.95, density: 10.28, meltingPoint: 2623 }, actual: { mass: 95.95, density: 10.28, meltingPoint: 2623, boilingPoint: 4639, electronegativity: 2.16, radius: 139 }, category: "Transition Metal" },
+            43: { symbol: "Tc", name: "Technetium", group: 7, period: 5, predicted: { mass: 98.00, density: 11.50, meltingPoint: 2157 }, actual: { mass: 98.00, density: 11.50, meltingPoint: 2157, boilingPoint: 4265, electronegativity: 1.90, radius: 136 }, category: "Transition Metal" },
+            44: { symbol: "Ru", name: "Ruthenium", group: 8, period: 5, predicted: { mass: 101.07, density: 12.45, meltingPoint: 2334 }, actual: { mass: 101.07, density: 12.45, meltingPoint: 2334, boilingPoint: 4150, electronegativity: 2.20, radius: 134 }, category: "Transition Metal" },
+            45: { symbol: "Rh", name: "Rhodium", group: 9, period: 5, predicted: { mass: 102.91, density: 12.41, meltingPoint: 1964 }, actual: { mass: 102.91, density: 12.41, meltingPoint: 1964, boilingPoint: 3695, electronegativity: 2.28, radius: 134 }, category: "Transition Metal" },
+            46: { symbol: "Pd", name: "Palladium", group: 10, period: 5, predicted: { mass: 106.42, density: 12.02, meltingPoint: 1555 }, actual: { mass: 106.42, density: 12.02, meltingPoint: 1555, boilingPoint: 2963, electronegativity: 2.20, radius: 137 }, category: "Transition Metal" },
+            47: { symbol: "Ag", name: "Silver", group: 11, period: 5, predicted: { mass: 107.87, density: 10.49, meltingPoint: 962 }, actual: { mass: 107.868, density: 10.49, meltingPoint: 961.78, boilingPoint: 2162, electronegativity: 1.93, radius: 144 }, category: "Transition Metal" },
+            48: { symbol: "Cd", name: "Cadmium", group: 12, period: 5, predicted: { mass: 112.41, density: 8.65, meltingPoint: 321 }, actual: { mass: 112.414, density: 8.65, meltingPoint: 321, boilingPoint: 767, electronegativity: 1.69, radius: 151 }, category: "Transition Metal" },
+            49: { symbol: "In", name: "Indium", group: 13, period: 5, predicted: { mass: 114.82, density: 7.31, meltingPoint: 157 }, actual: { mass: 114.818, density: 7.31, meltingPoint: 156.6, boilingPoint: 2072, electronegativity: 1.78, radius: 167 }, category: "Post-transition Metal" },
+            50: { symbol: "Sn", name: "Tin", group: 14, period: 5, predicted: { mass: 118.71, density: 7.29, meltingPoint: 232 }, actual: { mass: 118.71, density: 7.29, meltingPoint: 231.93, boilingPoint: 2602, electronegativity: 1.96, radius: 162 }, category: "Post-transition Metal" },
+            51: { symbol: "Sb", name: "Antimony", group: 15, period: 5, predicted: { mass: 121.76, density: 6.70, meltingPoint: 631 }, actual: { mass: 121.76, density: 6.70, meltingPoint: 630.6, boilingPoint: 1587, electronegativity: 2.05, radius: 159 }, category: "Metalloid" },
+            52: { symbol: "Te", name: "Tellurium", group: 16, period: 5, predicted: { mass: 127.60, density: 6.24, meltingPoint: 450 }, actual: { mass: 127.60, density: 6.24, meltingPoint: 449.5, boilingPoint: 988, electronegativity: 2.10, radius: 142 }, category: "Metalloid" },
+            53: { symbol: "I", name: "Iodine", group: 17, period: 5, predicted: { mass: 126.90, density: 4.93, meltingPoint: 114 }, actual: { mass: 126.904, density: 4.93, meltingPoint: 113.7, boilingPoint: 184.3, electronegativity: 2.66, radius: 133 }, category: "Halogen" },
+            54: { symbol: "Xe", name: "Xenon", group: 18, period: 5, predicted: { mass: 131.29, density: 5.89, meltingPoint: -111.8 }, actual: { mass: 131.293, density: 5.89, meltingPoint: -111.8, boilingPoint: -108.1, electronegativity: 2.60, radius: 130 }, category: "Noble Gas" },
+            55: { symbol: "Cs", name: "Cesium", group: 1, period: 6, predicted: { mass: 132.91, density: 1.93, meltingPoint: 28.5 }, actual: { mass: 132.905, density: 1.93, meltingPoint: 28.5, boilingPoint: 671, electronegativity: 0.79, radius: 265 }, category: "Alkali Metal" },
+            56: { symbol: "Ba", name: "Barium", group: 2, period: 6, predicted: { mass: 137.33, density: 3.62, meltingPoint: 727 }, actual: { mass: 137.327, density: 3.62, meltingPoint: 727, boilingPoint: 1897, electronegativity: 0.89, radius: 222 }, category: "Alkaline Earth" },
+            57: { symbol: "La", name: "Lanthanum", group: 3, period: 6, predicted: { mass: 138.91, density: 6.15, meltingPoint: 920 }, actual: { mass: 138.905, density: 6.15, meltingPoint: 920, boilingPoint: 3464, electronegativity: 1.10, radius: 187 }, category: "Lanthanide" },
+            58: { symbol: "Ce", name: "Cerium", group: 3, period: 6, predicted: { mass: 140.12, density: 6.77, meltingPoint: 795 }, actual: { mass: 140.116, density: 6.77, meltingPoint: 795, boilingPoint: 3443, electronegativity: 1.12, radius: 181 }, category: "Lanthanide" },
+            59: { symbol: "Pr", name: "Praseodymium", group: 3, period: 6, predicted: { mass: 140.91, density: 6.77, meltingPoint: 931 }, actual: { mass: 140.908, density: 6.77, meltingPoint: 931, boilingPoint: 3520, electronegativity: 1.13, radius: 182 }, category: "Lanthanide" },
+            60: { symbol: "Nd", name: "Neodymium", group: 3, period: 6, predicted: { mass: 144.24, density: 7.01, meltingPoint: 1024 }, actual: { mass: 144.242, density: 7.01, meltingPoint: 1024, boilingPoint: 3074, electronegativity: 1.14, radius: 181 }, category: "Lanthanide" },
+            61: { symbol: "Pm", name: "Promethium", group: 3, period: 6, predicted: { mass: 145.00, density: 7.26, meltingPoint: 1042 }, actual: { mass: 145.00, density: 7.26, meltingPoint: 1042, boilingPoint: 3000, electronegativity: 1.13, radius: 183 }, category: "Lanthanide" },
+            62: { symbol: "Sm", name: "Samarium", group: 3, period: 6, predicted: { mass: 150.36, density: 7.52, meltingPoint: 1072 }, actual: { mass: 150.36, density: 7.52, meltingPoint: 1072, boilingPoint: 1794, electronegativity: 1.17, radius: 180 }, category: "Lanthanide" },
+            63: { symbol: "Eu", name: "Europium", group: 3, period: 6, predicted: { mass: 151.96, density: 5.24, meltingPoint: 826 }, actual: { mass: 151.964, density: 5.24, meltingPoint: 826, boilingPoint: 1529, electronegativity: 1.20, radius: 199 }, category: "Lanthanide" },
+            64: { symbol: "Gd", name: "Gadolinium", group: 3, period: 6, predicted: { mass: 157.25, density: 7.90, meltingPoint: 1312 }, actual: { mass: 157.25, density: 7.90, meltingPoint: 1312, boilingPoint: 3273, electronegativity: 1.20, radius: 180 }, category: "Lanthanide" },
+            65: { symbol: "Tb", name: "Terbium", group: 3, period: 6, predicted: { mass: 158.93, density: 8.23, meltingPoint: 1356 }, actual: { mass: 158.925, density: 8.23, meltingPoint: 1356, boilingPoint: 3123, electronegativity: 1.10, radius: 177 }, category: "Lanthanide" },
+            66: { symbol: "Dy", name: "Dysprosium", group: 3, period: 6, predicted: { mass: 162.50, density: 8.55, meltingPoint: 1407 }, actual: { mass: 162.50, density: 8.55, meltingPoint: 1407, boilingPoint: 2567, electronegativity: 1.22, radius: 178 }, category: "Lanthanide" },
+            67: { symbol: "Ho", name: "Holmium", group: 3, period: 6, predicted: { mass: 164.93, density: 8.80, meltingPoint: 1461 }, actual: { mass: 164.93, density: 8.80, meltingPoint: 1461, boilingPoint: 2720, electronegativity: 1.23, radius: 176 }, category: "Lanthanide" },
+            68: { symbol: "Er", name: "Erbium", group: 3, period: 6, predicted: { mass: 167.26, density: 9.07, meltingPoint: 1529 }, actual: { mass: 167.26, density: 9.07, meltingPoint: 1529, boilingPoint: 2868, electronegativity: 1.24, radius: 176 }, category: "Lanthanide" },
+            69: { symbol: "Tm", name: "Thulium", group: 3, period: 6, predicted: { mass: 168.93, density: 9.32, meltingPoint: 1545 }, actual: { mass: 168.934, density: 9.32, meltingPoint: 1545, boilingPoint: 1950, electronegativity: 1.25, radius: 174 }, category: "Lanthanide" },
+            70: { symbol: "Yb", name: "Ytterbium", group: 3, period: 6, predicted: { mass: 173.05, density: 6.90, meltingPoint: 819 }, actual: { mass: 173.045, density: 6.90, meltingPoint: 819, boilingPoint: 1196, electronegativity: 1.10, radius: 187 }, category: "Lanthanide" },
+            71: { symbol: "Lu", name: "Lutetium", group: 3, period: 6, predicted: { mass: 174.97, density: 9.84, meltingPoint: 1663 }, actual: { mass: 174.967, density: 9.84, meltingPoint: 1663, boilingPoint: 3402, electronegativity: 1.27, radius: 173 }, category: "Lanthanide" },
+            72: { symbol: "Hf", name: "Hafnium", group: 4, period: 6, predicted: { mass: 178.49, density: 13.31, meltingPoint: 2233 }, actual: { mass: 178.49, density: 13.31, meltingPoint: 2233, boilingPoint: 4603, electronegativity: 1.30, radius: 159 }, category: "Transition Metal" },
+            73: { symbol: "Ta", name: "Tantalum", group: 5, period: 6, predicted: { mass: 180.95, density: 16.65, meltingPoint: 3017 }, actual: { mass: 180.948, density: 16.65, meltingPoint: 3017, boilingPoint: 5458, electronegativity: 1.50, radius: 146 }, category: "Transition Metal" },
+            74: { symbol: "W", name: "Tungsten", group: 6, period: 6, predicted: { mass: 183.84, density: 19.25, meltingPoint: 3422 }, actual: { mass: 183.84, density: 19.25, meltingPoint: 3422, boilingPoint: 5555, electronegativity: 2.36, radius: 139 }, category: "Transition Metal" },
+            75: { symbol: "Re", name: "Rhenium", group: 7, period: 6, predicted: { mass: 186.21, density: 21.02, meltingPoint: 3186 }, actual: { mass: 186.207, density: 21.02, meltingPoint: 3186, boilingPoint: 5596, electronegativity: 1.90, radius: 137 }, category: "Transition Metal" },
+            76: { symbol: "Os", name: "Osmium", group: 8, period: 6, predicted: { mass: 190.23, density: 22.59, meltingPoint: 3033 }, actual: { mass: 190.23, density: 22.59, meltingPoint: 3033, boilingPoint: 5012, electronegativity: 2.20, radius: 135 }, category: "Transition Metal" },
+            77: { symbol: "Ir", name: "Iridium", group: 9, period: 6, predicted: { mass: 192.22, density: 22.56, meltingPoint: 2446 }, actual: { mass: 192.217, density: 22.56, meltingPoint: 2446, boilingPoint: 4428, electronegativity: 2.20, radius: 136 }, category: "Transition Metal" },
+            78: { symbol: "Pt", name: "Platinum", group: 10, period: 6, predicted: { mass: 195.08, density: 21.45, meltingPoint: 1768 }, actual: { mass: 195.084, density: 21.45, meltingPoint: 1768, boilingPoint: 3825, electronegativity: 2.28, radius: 139 }, category: "Transition Metal" },
+            79: { symbol: "Au", name: "Gold", group: 11, period: 6, predicted: { mass: 196.97, density: 19.32, meltingPoint: 1064 }, actual: { mass: 196.967, density: 19.32, meltingPoint: 1064.18, boilingPoint: 2856, electronegativity: 2.54, radius: 144 }, category: "Transition Metal" },
+            80: { symbol: "Hg", name: "Mercury", group: 12, period: 6, predicted: { mass: 200.59, density: 13.53, meltingPoint: -38.8 }, actual: { mass: 200.59, density: 13.53, meltingPoint: -38.8, boilingPoint: 356.6, electronegativity: 2.00, radius: 151 }, category: "Transition Metal" },
+            81: { symbol: "Tl", name: "Thallium", group: 13, period: 6, predicted: { mass: 204.38, density: 11.85, meltingPoint: 304 }, actual: { mass: 204.383, density: 11.85, meltingPoint: 304, boilingPoint: 1473, electronegativity: 1.80, radius: 170 }, category: "Post-transition Metal" },
+            82: { symbol: "Pb", name: "Lead", group: 14, period: 6, predicted: { mass: 207.20, density: 11.34, meltingPoint: 327 }, actual: { mass: 207.20, density: 11.34, meltingPoint: 327.5, boilingPoint: 1749, electronegativity: 1.80, radius: 180 }, category: "Post-transition Metal" },
+            83: { symbol: "Bi", name: "Bismuth", group: 15, period: 6, predicted: { mass: 208.98, density: 9.78, meltingPoint: 271 }, actual: { mass: 208.98, density: 9.78, meltingPoint: 271.4, boilingPoint: 1564, electronegativity: 2.02, radius: 160 }, category: "Post-transition Metal" },
+            84: { symbol: "Po", name: "Polonium", group: 16, period: 6, predicted: { mass: 209.00, density: 9.20, meltingPoint: 254 }, actual: { mass: 209.00, density: 9.20, meltingPoint: 254, boilingPoint: 962, electronegativity: 2.00, radius: 168 }, category: "Post-transition Metal" },
+            85: { symbol: "At", name: "Astatine", group: 17, period: 6, predicted: { mass: 210.00, density: 7.00, meltingPoint: 302 }, actual: { mass: 210.00, density: 7.00, meltingPoint: 302, boilingPoint: 337, electronegativity: 2.20, radius: 145 }, category: "Halogen" },
+            86: { symbol: "Rn", name: "Radon", group: 18, period: 6, predicted: { mass: 222.00, density: 9.73, meltingPoint: -71 }, actual: { mass: 222.00, density: 9.73, meltingPoint: -71, boilingPoint: -61.7, electronegativity: null, radius: 145 }, category: "Noble Gas" },
+            87: { symbol: "Fr", name: "Francium", group: 1, period: 7, predicted: { mass: 223.00, density: 2.48, meltingPoint: 27 }, actual: { mass: 223.00, density: 2.48, meltingPoint: 27, boilingPoint: 677, electronegativity: 0.70, radius: 280 }, category: "Alkali Metal" },
+            88: { symbol: "Ra", name: "Radium", group: 2, period: 7, predicted: { mass: 226.00, density: 5.50, meltingPoint: 700 }, actual: { mass: 226.00, density: 5.50, meltingPoint: 700, boilingPoint: 1737, electronegativity: 0.90, radius: 221 }, category: "Alkaline Earth" },
+            89: { symbol: "Ac", name: "Actinium", group: 3, period: 7, predicted: { mass: 227.00, density: 10.07, meltingPoint: 1050 }, actual: { mass: 227.00, density: 10.07, meltingPoint: 1050, boilingPoint: 3198, electronegativity: 1.10, radius: 195 }, category: "Actinide" },
+            90: { symbol: "Th", name: "Thorium", group: 3, period: 7, predicted: { mass: 232.04, density: 11.72, meltingPoint: 1750 }, actual: { mass: 232.038, density: 11.72, meltingPoint: 1750, boilingPoint: 4788, electronegativity: 1.30, radius: 180 }, category: "Actinide" },
+            91: { symbol: "Pa", name: "Protactinium", group: 3, period: 7, predicted: { mass: 231.04, density: 15.37, meltingPoint: 1568 }, actual: { mass: 231.036, density: 15.37, meltingPoint: 1568, boilingPoint: 4027, electronegativity: 1.50, radius: 161 }, category: "Actinide" },
+            92: { symbol: "U", name: "Uranium", group: 3, period: 7, predicted: { mass: 238.03, density: 19.05, meltingPoint: 1132 }, actual: { mass: 238.029, density: 19.05, meltingPoint: 1132, boilingPoint: 4131, electronegativity: 1.38, radius: 138 }, category: "Actinide" },
+            93: { symbol: "Np", name: "Neptunium", group: 3, period: 7, predicted: { mass: 237.00, density: 20.45, meltingPoint: 644 }, actual: { mass: 237.00, density: 20.45, meltingPoint: 644, boilingPoint: 4174, electronegativity: 1.36, radius: 155 }, category: "Actinide" },
+            94: { symbol: "Pu", name: "Plutonium", group: 3, period: 7, predicted: { mass: 244.00, density: 19.82, meltingPoint: 640 }, actual: { mass: 244.00, density: 19.82, meltingPoint: 640, boilingPoint: 3228, electronegativity: 1.28, radius: 159 }, category: "Actinide" },
+            95: { symbol: "Am", name: "Americium", group: 3, period: 7, predicted: { mass: 243.00, density: 13.67, meltingPoint: 1176 }, actual: { mass: 243.00, density: 13.67, meltingPoint: 1176, boilingPoint: 2011, electronegativity: 1.30, radius: 173 }, category: "Actinide" },
+            96: { symbol: "Cm", name: "Curium", group: 3, period: 7, predicted: { mass: 247.00, density: 13.51, meltingPoint: 1340 }, actual: { mass: 247.00, density: 13.51, meltingPoint: 1340, boilingPoint: 3110, electronegativity: 1.30, radius: 170 }, category: "Actinide" },
+            97: { symbol: "Bk", name: "Berkelium", group: 3, period: 7, predicted: { mass: 247.00, density: 14.78, meltingPoint: 986 }, actual: { mass: 247.00, density: 14.78, meltingPoint: 986, boilingPoint: 2627, electronegativity: 1.30, radius: 168 }, category: "Actinide" },
+            98: { symbol: "Cf", name: "Californium", group: 3, period: 7, predicted: { mass: 251.00, density: 15.10, meltingPoint: 900 }, actual: { mass: 251.00, density: 15.10, meltingPoint: 900, boilingPoint: 1470, electronegativity: 1.30, radius: 166 }, category: "Actinide" },
+            99: { symbol: "Es", name: "Einsteinium", group: 3, period: 7, predicted: { mass: 252.00, density: 8.84, meltingPoint: 860 }, actual: { mass: 252.00, density: 8.84, meltingPoint: 860, boilingPoint: 996, electronegativity: 1.30, radius: 165 }, category: "Actinide" },
+            100: { symbol: "Fm", name: "Fermium", group: 3, period: 7, predicted: { mass: 257.00, density: 9.70, meltingPoint: 1527 }, actual: { mass: 257.00, density: 9.70, meltingPoint: 1527, boilingPoint: 1645, electronegativity: 1.30, radius: 164 }, category: "Actinide" },
+            101: { symbol: "Md", name: "Mendelevium", group: 3, period: 7, predicted: { mass: 258.00, density: 10.30, meltingPoint: 827 }, actual: { mass: 258.00, density: 10.30, meltingPoint: 827, boilingPoint: 1580, electronegativity: 1.30, radius: 163 }, category: "Actinide" },
+            102: { symbol: "No", name: "Nobelium", group: 3, period: 7, predicted: { mass: 259.00, density: 9.90, meltingPoint: 827 }, actual: { mass: 259.00, density: 9.90, meltingPoint: 827, boilingPoint: 1630, electronegativity: 1.30, radius: 162 }, category: "Actinide" },
+            103: { symbol: "Lr", name: "Lawrencium", group: 3, period: 7, predicted: { mass: 266.00, density: 15.60, meltingPoint: 1627 }, actual: { mass: 266.00, density: 15.60, meltingPoint: 1627, boilingPoint: 2020, electronegativity: 1.30, radius: 161 }, category: "Actinide" },
+            104: { symbol: "Rf", name: "Rutherfordium", group: 4, period: 7, predicted: { mass: 267.00, density: 23.20, meltingPoint: 2100 }, actual: { mass: 267.00, density: 23.20, meltingPoint: 2100, electronegativity: null, radius: 157 }, category: "Transition Metal" },
+            105: { symbol: "Db", name: "Dubnium", group: 5, period: 7, predicted: { mass: 268.00, density: 29.30, meltingPoint: 2100 }, actual: { mass: 268.00, density: 29.30, meltingPoint: 2100, electronegativity: null, radius: 149 }, category: "Transition Metal" },
+            106: { symbol: "Sg", name: "Seaborgium", group: 6, period: 7, predicted: { mass: 269.00, density: 35.00, meltingPoint: 2100 }, actual: { mass: 269.00, density: 35.00, meltingPoint: 2100, electronegativity: null, radius: 146 }, category: "Transition Metal" },
+            107: { symbol: "Bh", name: "Bohrium", group: 7, period: 7, predicted: { mass: 270.00, density: 37.10, meltingPoint: 2100 }, actual: { mass: 270.00, density: 37.10, meltingPoint: 2100, electronegativity: null, radius: 144 }, category: "Transition Metal" },
+            108: { symbol: "Hs", name: "Hassium", group: 8, period: 7, predicted: { mass: 277.00, density: 40.80, meltingPoint: 2100 }, actual: { mass: 277.00, density: 40.80, meltingPoint: 2100, electronegativity: null, radius: 141 }, category: "Transition Metal" },
+            109: { symbol: "Mt", name: "Meitnerium", group: 9, period: 7, predicted: { mass: 278.00, density: 37.40, meltingPoint: 2100 }, actual: { mass: 278.00, density: 37.40, meltingPoint: 2100, electronegativity: null, radius: 139 }, category: "Transition Metal" },
+            110: { symbol: "Ds", name: "Darmstadtium", group: 10, period: 7, predicted: { mass: 281.00, density: 34.80, meltingPoint: 2100 }, actual: { mass: 281.00, density: 34.80, meltingPoint: 2100, electronegativity: null, radius: 138 }, category: "Transition Metal" },
+            111: { symbol: "Rg", name: "Roentgenium", group: 11, period: 7, predicted: { mass: 282.00, density: 28.70, meltingPoint: 2100 }, actual: { mass: 282.00, density: 28.70, meltingPoint: 2100, electronegativity: null, radius: 138 }, category: "Transition Metal" },
+            112: { symbol: "Cn", name: "Copernicium", group: 12, period: 7, predicted: { mass: 285.00, density: 23.70, meltingPoint: 10 }, actual: { mass: 285.00, density: 23.70, meltingPoint: 10, electronegativity: null, radius: 147 }, category: "Transition Metal" },
+            113: { symbol: "Nh", name: "Nihonium", group: 13, period: 7, predicted: { mass: 286.00, density: 16.00, meltingPoint: 430 }, actual: { mass: 286.00, density: 16.00, meltingPoint: 430, electronegativity: null, radius: 170 }, category: "Post-transition Metal" },
+            114: { symbol: "Fl", name: "Flerovium", group: 14, period: 7, predicted: { mass: 289.00, density: 14.00, meltingPoint: 70 }, actual: { mass: 289.00, density: 14.00, meltingPoint: 70, electronegativity: null, radius: 180 }, category: "Post-transition Metal" },
+            115: { symbol: "Mc", name: "Moscovium", group: 15, period: 7, predicted: { mass: 290.00, density: 13.50, meltingPoint: 400 }, actual: { mass: 290.00, density: 13.50, meltingPoint: 400, electronegativity: null, radius: 170 }, category: "Post-transition Metal" },
+            116: { symbol: "Lv", name: "Livermorium", group: 16, period: 7, predicted: { mass: 293.00, density: 12.90, meltingPoint: 500 }, actual: { mass: 293.00, density: 12.90, meltingPoint: 500, electronegativity: null, radius: 160 }, category: "Post-transition Metal" },
+            117: { symbol: "Ts", name: "Tennessine", group: 17, period: 7, predicted: { mass: 294.00, density: 7.20, meltingPoint: 450 }, actual: { mass: 294.00, density: 7.20, meltingPoint: 450, electronegativity: null, radius: 150 }, category: "Halogen" },
+            118: { symbol: "Og", name: "Oganesson", group: 18, period: 7, predicted: { mass: 294.00, density: 4.90, meltingPoint: 50 }, actual: { mass: 294.00, density: 4.90, meltingPoint: 50, electronegativity: null, radius: 150 }, category: "Noble Gas" }
         };
 
-        // Add more elements to cover Hydrogen, Helium, Lithium fully
-        const allElements = [
-            { atomicNumber: 1, symbol: "H", name: "Hydrogen", predicted: { mass: 1.0, density: 0.09, meltingPoint: -259 }, actual: { mass: 1.008, density: 0.0899, meltingPoint: -259.14 } },
-            { atomicNumber: 2, symbol: "He", name: "Helium", predicted: { mass: 4.0, density: 0.18, meltingPoint: -272 }, actual: { mass: 4.0026, density: 0.1785, meltingPoint: -272.2 } },
-            { atomicNumber: 3, symbol: "Li", name: "Lithium", predicted: { mass: 6.94, density: 0.53, meltingPoint: 180 }, actual: { mass: 6.94, density: 0.534, meltingPoint: 180.5 } },
-            { atomicNumber: 4, symbol: "Be", name: "Beryllium", predicted: { mass: 9.01, density: 1.85, meltingPoint: 1287 }, actual: { mass: 9.012, density: 1.848, meltingPoint: 1287 } },
-            { atomicNumber: 11, symbol: "Na", name: "Sodium", predicted: { mass: 22.99, density: 0.97, meltingPoint: 98 }, actual: { mass: 22.99, density: 0.971, meltingPoint: 97.72 } },
-            { atomicNumber: 12, symbol: "Mg", name: "Magnesium", predicted: { mass: 24.31, density: 1.74, meltingPoint: 650 }, actual: { mass: 24.305, density: 1.738, meltingPoint: 650 } },
-            { atomicNumber: 13, symbol: "Al", name: "Aluminium", predicted: { mass: 26.98, density: 2.70, meltingPoint: 660 }, actual: { mass: 26.982, density: 2.699, meltingPoint: 660.32 } },
-            { atomicNumber: 14, symbol: "Si", name: "Silicon", predicted: { mass: 28.09, density: 2.33, meltingPoint: 1414 }, actual: { mass: 28.086, density: 2.329, meltingPoint: 1414 } },
-            { atomicNumber: 26, symbol: "Fe", name: "Iron", predicted: { mass: 55.85, density: 7.87, meltingPoint: 1538 }, actual: { mass: 55.845, density: 7.874, meltingPoint: 1538 } },
-            { atomicNumber: 29, symbol: "Cu", name: "Copper", predicted: { mass: 63.55, density: 8.96, meltingPoint: 1085 }, actual: { mass: 63.546, density: 8.96, meltingPoint: 1084.62 } },
-            { atomicNumber: 47, symbol: "Ag", name: "Silver", predicted: { mass: 107.87, density: 10.49, meltingPoint: 962 }, actual: { mass: 107.868, density: 10.49, meltingPoint: 961.78 } },
-            { atomicNumber: 79, symbol: "Au", name: "Gold", predicted: { mass: 196.97, density: 19.32, meltingPoint: 1064 }, actual: { mass: 196.967, density: 19.32, meltingPoint: 1064.18 } }
-        ];
+        let currentPage = 1;
+        let currentFilter = "all";
+        let itemsPerPage = 24;
+        let currentSearchQuery = "";
+
+        function getAllElementsArray() {
+            return Object.keys(elementsData).map(z => ({
+                atomicNumber: parseInt(z),
+                ...elementsData[z]
+            })).sort((a, b) => a.atomicNumber - b.atomicNumber);
+        }
 
         function calculateAccuracy(predicted, actual) {
-            if (!predicted || !actual) return "N/A";
+            if (!predicted || !actual || actual === 0) return { error: null, level: "N/A" };
             const error = Math.abs((actual - predicted) / actual) * 100;
-            if (error < 5) return "Excellent";
-            if (error < 15) return "Good";
-            return "Moderate";
+            if (error < 5) return { error: error, level: "Excellent", class: "accuracy-high" };
+            if (error < 15) return { error: error, level: "Good", class: "accuracy-medium" };
+            return { error: error, level: "Moderate", class: "accuracy-low" };
         }
 
         function displayElementDetails(element) {
             const panel = document.getElementById('predictionPanel');
-            const predictions = [
-                { property: "Atomic Mass (g/mol)", predicted: element.predicted.mass, actual: element.actual.mass, unit: "g/mol" },
-                { property: "Density (g/cm³)", predicted: element.predicted.density, actual: element.actual.density, unit: "g/cm³" },
-                { property: "Melting Point (°C)", predicted: element.predicted.meltingPoint, actual: element.actual.meltingPoint, unit: "°C" }
+            
+            const properties = [
+                { name: "Atomic Mass (g/mol)", predicted: element.predicted.mass, actual: element.actual.mass, unit: "g/mol" },
+                { name: "Density (g/cm³ or g/L)", predicted: element.predicted.density, actual: element.actual.density, unit: element.category === "Noble Gas" || element.category === "Nonmetal" && element.actual.density < 5 ? "g/L" : "g/cm³" },
+                { name: "Melting Point (°C)", predicted: element.predicted.meltingPoint, actual: element.actual.meltingPoint, unit: "°C" },
+                { name: "Boiling Point (°C)", predicted: null, actual: element.actual.boilingPoint, unit: "°C" },
+                { name: "Electronegativity", predicted: null, actual: element.actual.electronegativity, unit: "" },
+                { name: "Atomic Radius (pm)", predicted: null, actual: element.actual.radius, unit: "pm" }
             ];
 
-            let accuracyClass = "";
-            let overallAccuracy = 0;
-            predictions.forEach(p => {
+            let overallError = 0;
+            let validCount = 0;
+            properties.forEach(p => {
                 if (p.predicted && p.actual) {
                     const error = Math.abs((p.actual - p.predicted) / p.actual) * 100;
-                    overallAccuracy += error;
+                    overallError += error;
+                    validCount++;
                 }
             });
-            overallAccuracy = overallAccuracy / predictions.filter(p => p.predicted && p.actual).length;
-            if (overallAccuracy < 10) accuracyClass = "accuracy-high";
-            else if (overallAccuracy < 25) accuracyClass = "accuracy-medium";
+            const avgError = validCount > 0 ? overallError / validCount : 0;
+            const overallClass = avgError < 10 ? "accuracy-high" : avgError < 25 ? "accuracy-medium" : "accuracy-low";
             
             const predictionHtml = `
                 <div class="prediction-title">
                     🔬 Element #${element.atomicNumber}: ${element.name} (${element.symbol})
-                    <span class="accuracy ${accuracyClass}" style="margin-left: 15px;">
-                        Overall Prediction Accuracy: ${(100 - overallAccuracy).toFixed(1)}%
+                    <span class="accuracy ${overallClass}" style="margin-left: 15px;">
+                        Overall Accuracy: ${(100 - avgError).toFixed(1)}%
                     </span>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <span class="category-badge" style="position: relative; background: ${getCategoryColor(element.category)};">${element.category}</span>
+                    <span style="margin-left: 10px;">Group ${element.group} | Period ${element.period}</span>
                 </div>
                 <table class="comparison-table">
                     <thead>
                         <tr><th>Property</th><th>📊 Predicted Value</th><th>✅ Actual Value</th><th>🎯 Accuracy</th></tr>
                     </thead>
                     <tbody>
-                        ${predictions.map(p => {
-                            const error = p.predicted && p.actual ? Math.abs((p.actual - p.predicted) / p.actual) * 100 : 0;
-                            const accuracyText = error < 5 ? "Excellent" : error < 15 ? "Good" : error < 30 ? "Fair" : "Moderate";
+                        ${properties.map(p => {
+                            const accuracy = (p.predicted && p.actual) ? calculateAccuracy(p.predicted, p.actual) : null;
                             return `
                                 <tr>
-                                    <td>${p.property}</td>
-                                    <td class="predicted">${p.predicted !== undefined ? p.predicted + " " + p.unit : "N/A"}</td>
-                                    <td class="actual">${p.actual !== undefined ? p.actual + " " + p.unit : "N/A"}</td>
-                                    <td>${error > 0 ? `<span class="accuracy accuracy-${error < 5 ? 'high' : error < 15 ? 'medium' : 'low'}">${accuracyText} (${error.toFixed(2)}% error)</span>` : "N/A"}</td>
+                                    <td>${p.name}</td>
+                                    <td class="predicted">${p.predicted !== null ? p.predicted + " " + p.unit : "—"}</td>
+                                    <td class="actual">${p.actual !== null ? p.actual + " " + p.unit : "—"}</td>
+                                    <td>${accuracy && accuracy.error !== null ? `<span class="accuracy ${accuracy.class}">${accuracy.level} (${accuracy.error.toFixed(2)}% error)</span>` : "—"}</td>
                                 </tr>
                             `;
                         }).join('')}
                     </tbody>
                 </table>
                 <div style="margin-top: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
-                    <strong>💡 Did you know?</strong> Mendeleev's periodic table predicted many undiscovered elements with remarkable accuracy. 
-                    For ${element.name}, the predictions for atomic mass, density, and melting point were astonishingly close to the actual values discovered years later!
+                    <strong>💡 Did you know?</strong> 
+                    ${getFunFact(element.name, element.category, element.actual)}
                 </div>
             `;
             
@@ -382,55 +587,160 @@
             panel.scrollIntoView({ behavior: "smooth", block: "start" });
         }
 
-        function renderElementGrid(elements) {
+        function getCategoryColor(category) {
+            const colors = {
+                "Alkali Metal": "#ff6b6b",
+                "Alkaline Earth": "#ffb347",
+                "Transition Metal": "#4ecdc4",
+                "Lanthanide": "#45b7d1",
+                "Actinide": "#96ceb4",
+                "Post-transition Metal": "#a8e6cf",
+                "Metalloid": "#ffeaa7",
+                "Nonmetal": "#dfe6e9",
+                "Halogen": "#fd79a8",
+                "Noble Gas": "#74b9ff"
+            };
+            return colors[category] || "#667eea";
+        }
+
+        function getFunFact(name, category, actual) {
+            const facts = {
+                "Hydrogen": "It's the most abundant element in the universe, making up about 75% of all matter!",
+                "Helium": "It's the only element that never freezes solid at normal pressure - even at absolute zero!",
+                "Lithium": "Used in rechargeable batteries for phones, laptops, and electric vehicles.",
+                "Carbon": "Diamonds and graphite are both made of pure carbon - just arranged differently!",
+                "Gold": "All the gold ever mined could fill about 3 Olympic swimming pools.",
+                "Mercury": "The only metal that is liquid at room temperature!",
+                "Gallium": "It melts in your hand (at 29.8°C) but won't wet your skin like mercury.",
+                "Tungsten": "Has the highest melting point of any metal (3422°C)!",
+                "Osmium": "The densest naturally occurring element (22.59 g/cm³)."
+            };
+            return facts[name] || `${name} was ${category === "Actinide" ? "synthesized in laboratories" : "discovered using periodic table predictions"} and its properties perfectly match periodic trends!`;
+        }
+
+        function renderElementGrid(elements, page = 1) {
             const grid = document.getElementById('elementGrid');
-            if (elements.length === 0) {
-                grid.innerHTML = '<div class="loading">No elements found. Try searching for "Hydrogen", "Helium", or "Lithium"!</div>';
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageElements = elements.slice(start, end);
+            
+            if (pageElements.length === 0) {
+                grid.innerHTML = '<div class="loading">No elements found. Try a different search term!</div>';
                 return;
             }
             
-            grid.innerHTML = elements.map(element => `
-                <div class="element-card" onclick="displayElementDetails(${JSON.stringify(element).replace(/"/g, '&quot;')})">
-                    <div class="element-header">
-                        <span class="element-symbol">${element.symbol}</span>
-                        <span class="element-number">#${element.atomicNumber}</span>
+            grid.innerHTML = pageElements.map(element => {
+                const massAccuracy = calculateAccuracy(element.predicted.mass, element.actual.mass);
+                return `
+                    <div class="element-card" onclick='displayElementDetails(${JSON.stringify(element).replace(/'/g, "&#39;")})'>
+                        <div class="category-badge" style="background: ${getCategoryColor(element.category)};">${element.category}</div>
+                        <div class="element-header">
+                            <span class="element-symbol">${element.symbol}</span>
+                            <span class="element-number">#${element.atomicNumber}</span>
+                        </div>
+                        <div class="element-name">${element.name}</div>
+                        <div class="property-row">
+                            <span>📊 Predicted Mass:</span>
+                            <span>${element.predicted.mass} g/mol</span>
+                        </div>
+                        <div class="property-row">
+                            <span>✅ Actual Mass:</span>
+                            <span class="actual">${element.actual.mass} g/mol</span>
+                        </div>
+                        <div class="prediction-badge">
+                            🎯 Accuracy: ${massAccuracy.level} (${massAccuracy.error?.toFixed(1) || "N/A"}% error)
+                        </div>
                     </div>
-                    <div class="element-name">${element.name}</div>
-                    <div class="prediction-badge">
-                        📊 Predicted Mass: ${element.predicted.mass} g/mol
-                    </div>
-                    <div class="prediction-badge" style="background: rgba(76, 175, 80, 0.3); margin-top: 5px;">
-                        ✅ Actual Mass: ${element.actual.mass} g/mol
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
+            
+            renderPagination(elements.length, page);
+        }
+
+        function renderPagination(totalItems, currentPage) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+            
+            let pages = [];
+            if (totalPages <= 7) {
+                pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+            } else {
+                pages = [1, 2, 3, '...', totalPages - 2, totalPages - 1, totalPages];
+                if (currentPage > 3 && currentPage < totalPages - 2) {
+                    pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                }
+            }
+            
+            paginationDiv.innerHTML = `
+                <button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>◀ Previous</button>
+                ${pages.map(p => p === '...' ? '<span style="padding: 8px;">...</span>' : `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="changePage(${p})">${p}</button>`).join('')}
+                <button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next ▶</button>
+            `;
+        }
+
+        function changePage(page) {
+            const elements = filterElements();
+            const totalPages = Math.ceil(elements.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                renderElementGrid(elements, currentPage);
+                document.getElementById('predictionPanel').style.display = "none";
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function filterElements() {
+            let elements = getAllElementsArray();
+            
+            if (currentFilter !== "all") {
+                elements = elements.filter(el => el.category === currentFilter);
+            }
+            
+            if (currentSearchQuery) {
+                elements = elements.filter(el => 
+                    el.name.toLowerCase().includes(currentSearchQuery) || 
+                    el.symbol.toLowerCase().includes(currentSearchQuery) ||
+                    el.atomicNumber.toString() === currentSearchQuery
+                );
+            }
+            
+            return elements;
         }
 
         function searchElement() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            if (!query) {
-                showAllElements();
-                return;
-            }
-            
-            const filtered = allElements.filter(element => 
-                element.name.toLowerCase().includes(query) || 
-                element.symbol.toLowerCase().includes(query) ||
-                element.atomicNumber.toString() === query
-            );
-            
-            renderElementGrid(filtered);
-            if (filtered.length === 1) {
-                displayElementDetails(filtered[0]);
-            } else {
-                document.getElementById('predictionPanel').style.display = "none";
-            }
+            currentSearchQuery = document.getElementById('searchInput').value.toLowerCase();
+            currentPage = 1;
+            const filtered = filterElements();
+            renderElementGrid(filtered, currentPage);
+            document.getElementById('predictionPanel').style.display = "none";
         }
 
         function showAllElements() {
-            renderElementGrid(allElements);
-            document.getElementById('predictionPanel').style.display = "none";
+            currentSearchQuery = "";
+            currentFilter = "all";
+            currentPage = 1;
             document.getElementById('searchInput').value = "";
+            document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.group-btn[data-group="all"]')?.classList.add('active');
+            renderElementGrid(getAllElementsArray(), currentPage);
+            document.getElementById('predictionPanel').style.display = "none";
+        }
+
+        function filterByCategory(category) {
+            currentFilter = category;
+            currentPage = 1;
+            currentSearchQuery = "";
+            document.getElementById('searchInput').value = "";
+            document.querySelectorAll('.group-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.group-btn[data-group="${category}"]`)?.classList.add('active');
+            const filtered = filterElements();
+            renderElementGrid(filtered, currentPage);
+            document.getElementById('predictionPanel').style.display = "none";
         }
 
         function updateSuggestions() {
@@ -443,19 +753,53 @@
                 return;
             }
             
-            const suggestions = allElements.filter(element => 
-                element.name.toLowerCase().includes(query) || 
-                element.symbol.toLowerCase().includes(query)
+            const suggestions = getAllElementsArray().filter(el => 
+                el.name.toLowerCase().includes(query) || 
+                el.symbol.toLowerCase().includes(query)
             ).slice(0, 5);
             
             suggestionsDiv.innerHTML = suggestions.map(s => 
                 `<div class="suggestion-chip" onclick="document.getElementById('searchInput').value='${s.name}'; searchElement();">
-                    ${s.name} (${s.symbol})
+                    ${s.name} (${s.symbol}) - Atomic #${s.atomicNumber}
                 </div>`
             ).join('');
         }
 
-        // Initialize with all elements
+        function renderStats() {
+            const elements = getAllElementsArray();
+            const categories = {};
+            elements.forEach(el => {
+                categories[el.category] = (categories[el.category] || 0) + 1;
+            });
+            
+            const statsHtml = Object.entries(categories).map(([cat, count]) => `
+                <div class="stat-card">
+                    <div class="stat-number">${count}</div>
+                    <div class="stat-label">${cat}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('statsBar').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">118</div>
+                    <div class="stat-label">Total Elements</div>
+                </div>
+                ${statsHtml}
+            `;
+        }
+
+        function renderGroupFilter() {
+            const categories = [...new Set(getAllElementsArray().map(el => el.category))];
+            const filterHtml = `
+                <div class="group-btn active" data-group="all" onclick="filterByCategory('all')">All (118)</div>
+                ${categories.map(cat => `<div class="group-btn" data-group="${cat}" onclick="filterByCategory('${cat}')">${cat}</div>`).join('')}
+            `;
+            document.getElementById('groupFilter').innerHTML = filterHtml;
+        }
+
+        // Initialize the application
+        renderStats();
+        renderGroupFilter();
         showAllElements();
         
         // Add event listeners
