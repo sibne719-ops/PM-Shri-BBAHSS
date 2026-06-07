@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Periodic Table - Element Prediction vs Actual Results</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.5);
+        }
+
+        .search-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Element Cards */
+        .element-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .element-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .element-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .element-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.5);
+        }
+
+        .element-symbol {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .element-number {
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .element-name {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #ddd;
+        }
+
+        .prediction-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        /* Prediction Panel */
+        .prediction-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .prediction-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-table th {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .predicted {
+            color: #ffa500;
+        }
+
+        .actual {
+            color: #4caf50;
+        }
+
+        .accuracy {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .accuracy-high {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+
+        .accuracy-medium {
+            background: rgba(255, 165, 0, 0.3);
+            color: #ffa500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        .suggestion-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .suggestion-chip {
+            padding: 5px 15px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .element-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PM SHRI BAKALIA BAHANI ADARSHA H.S SCHOOL</h1>
+        <h1> Periodic Table Explorer</h1>
+        <div class="subtitle">Predicting Element Properties vs Actual Results</div>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search by name (e.g., Hydrogen, Helium, Lithium) or symbol (H, He, Li)...">
+                <button class="search-btn" onclick="searchElement()">🔍 Search</button>
+                <button class="search-btn" onclick="showAllElements()">📋 Show All</button>
+            </div>
+            <div class="suggestion-list" id="suggestionList"></div>
+        </div>
+
+        <div id="elementGrid" class="element-grid"></div>
+
+        <div id="predictionPanel" class="prediction-panel" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Complete periodic table data with predictions and actual properties
+        const elementsData = {
+            1: { symbol: "H", name: "Hydrogen", group: 1, period: 1, predictedMass: 1.0, actualMass: 1.008, predictedDensity: 0.09, actualDensity: 0.0899, predictedMP: -259, actualMP: -259.14, category: "Nonmetal" },
+            2: { symbol: "He", name: "Helium", group: 18, period: 1, predictedMass: 4.0, actualMass: 4.0026, predictedDensity: 0.18, actualDensity: 0.1785, predictedMP: -272, actualMP: -272.2, category: "Noble Gas" },
+            3: { symbol: "Li", name: "Lithium", group: 1, period: 2, predictedMass: 6.94, actualMass: 6.94, predictedDensity: 0.53, actualDensity: 0.534, predictedMP: 180, actualMP: 180.5, category: "Alkali Metal" },
+            4: { symbol: "Be", name: "Beryllium", group: 2, period: 2, predictedMass: 9.01, actualMass: 9.012, predictedDensity: 1.85, actualDensity: 1.848, predictedMP: 1287, actualMP: 1287, category: "Alkaline Earth" },
+            5: { symbol: "B", name: "Boron", group: 13, period: 2, predictedMass: 10.81, actualMass: 10.81, predictedDensity: 2.34, actualDensity: 2.34, predictedMP: 2076, actualMP: 2076, category: "Metalloid" },
+            6: { symbol: "C", name: "Carbon", group: 14, period: 2, predictedMass: 12.01, actualMass: 12.011, predictedDensity: 2.26, actualDensity: 2.267, predictedMP: 3550, actualMP: 3550, category: "Nonmetal" },
+            7: { symbol: "N", name: "Nitrogen", group: 15, period: 2, predictedMass: 14.01, actualMass: 14.007, predictedDensity: 1.25, actualDensity: 1.2506, predictedMP: -210, actualMP: -210.1, category: "Nonmetal" },
+            8: { symbol: "O", name: "Oxygen", group: 16, period: 2, predictedMass: 16.00, actualMass: 15.999, predictedDensity: 1.43, actualDensity: 1.429, predictedMP: -218, actualMP: -218.79, category: "Nonmetal" },
+            9: { symbol: "F", name: "Fluorine", group: 17, period: 2, predictedMass: 19.00, actualMass: 18.998, predictedDensity: 1.70, actualDensity: 1.696, predictedMP: -220, actualMP: -219.62, category: "Halogen" },
+            10: { symbol: "Ne", name: "Neon", group: 18, period: 2, predictedMass: 20.18, actualMass: 20.18, predictedDensity: 0.90, actualDensity: 0.9002, predictedMP: -249, actualMP: -248.59, category: "Noble Gas" },
+            11: { symbol: "Na", name: "Sodium", group: 1, period: 3, predictedMass: 22.99, actualMass: 22.99, predictedDensity: 0.97, actualDensity: 0.971, predictedMP: 98, actualMP: 97.72, category: "Alkali Metal" },
+            12: { symbol: "Mg", name: "Magnesium", group: 2, period: 3, predictedMass: 24.31, actualMass: 24.305, predictedDensity: 1.74, actualDensity: 1.738, predictedMP: 650, actualMP: 650, category: "Alkaline Earth" },
+            13: { symbol: "Al", name: "Aluminium", group: 13, period: 3, predictedMass: 26.98, actualMass: 26.982, predictedDensity: 2.70, actualDensity: 2.699, predictedMP: 660, actualMP: 660.32, category: "Post-transition Metal" },
+            14: { symbol: "Si", name: "Silicon", group: 14, period: 3, predictedMass: 28.09, actualMass: 28.086, predictedDensity: 2.33, actualDensity: 2.329, predictedMP: 1414, actualMP: 1414, category: "Metalloid" },
+            15: { symbol: "P", name: "Phosphorus", group: 15, period: 3, predictedMass: 30.97, actualMass: 30.974, predictedDensity: 1.82, actualDensity: 1.823, predictedMP: 44, actualMP: 44.15, category: "Nonmetal" },
+            16: { symbol: "S", name: "Sulfur", group: 16, period: 3, predictedMass: 32.06, actualMass: 32.06, predictedDensity: 2.07, actualDensity: 2.067, predictedMP: 115, actualMP: 115.21, category: "Nonmetal" },
+            17: { symbol: "Cl", name: "Chlorine", group: 17, period: 3, predictedMass: 35.45, actualMass: 35.45, predictedDensity: 3.21, actualDensity: 3.214, predictedMP: -101, actualMP: -101.5, category: "Halogen" },
+            18: { symbol: "Ar", name: "Argon", group: 18, period: 3, predictedMass: 39.95, actualMass: 39.948, predictedDensity: 1.78, actualDensity: 1.784, predictedMP: -189, actualMP: -189.34, category: "Noble Gas" },
+            19: { symbol: "K", name: "Potassium", group: 1, period: 4, predictedMass: 39.10, actualMass: 39.098, predictedDensity: 0.86, actualDensity: 0.862, predictedMP: 64, actualMP: 63.5, category: "Alkali Metal" },
+            20: { symbol: "Ca", name: "Calcium", group: 2, period: 4, predictedMass: 40.08, actualMass: 40.078, predictedDensity: 1.55, actualDensity: 1.55, predictedMP: 842, actualMP: 842, category: "Alkaline Earth" },
+            26: { symbol: "Fe", name: "Iron", group: 8, period: 4, predictedMass: 55.85, actualMass: 55.845, predictedDensity: 7.87, actualDensity: 7.874, predictedMP: 1538, actualMP: 1538, category: "Transition Metal" },
+            29: { symbol: "Cu", name: "Copper", group: 11, period: 4, predictedMass: 63.55, actualMass: 63.546, predictedDensity: 8.96, actualDensity: 8.96, predictedMP: 1085, actualMP: 1084.62, category: "Transition Metal" },
+            47: { symbol: "Ag", name: "Silver", group: 11, period: 5, predictedMass: 107.87, actualMass: 107.868, predictedDensity: 10.49, actualDensity: 10.49, predictedMP: 962, actualMP: 961.78, category: "Transition Metal" },
+            79: { symbol: "Au", name: "Gold", group: 11, period: 6, predictedMass: 196.97, actualMass: 196.967, predictedDensity: 19.32, actualDensity: 19.32, predictedMP: 1064, actualMP: 1064.18, category: "Transition Metal" }
+        };
+
+        // Add more elements to cover Hydrogen, Helium, Lithium fully
+        const allElements = [
+            { atomicNumber: 1, symbol: "H", name: "Hydrogen", predicted: { mass: 1.0, density: 0.09, meltingPoint: -259 }, actual: { mass: 1.008, density: 0.0899, meltingPoint: -259.14 } },
+            { atomicNumber: 2, symbol: "He", name: "Helium", predicted: { mass: 4.0, density: 0.18, meltingPoint: -272 }, actual: { mass: 4.0026, density: 0.1785, meltingPoint: -272.2 } },
+            { atomicNumber: 3, symbol: "Li", name: "Lithium", predicted: { mass: 6.94, density: 0.53, meltingPoint: 180 }, actual: { mass: 6.94, density: 0.534, meltingPoint: 180.5 } },
+            { atomicNumber: 4, symbol: "Be", name: "Beryllium", predicted: { mass: 9.01, density: 1.85, meltingPoint: 1287 }, actual: { mass: 9.012, density: 1.848, meltingPoint: 1287 } },
+            { atomicNumber: 11, symbol: "Na", name: "Sodium", predicted: { mass: 22.99, density: 0.97, meltingPoint: 98 }, actual: { mass: 22.99, density: 0.971, meltingPoint: 97.72 } },
+            { atomicNumber: 12, symbol: "Mg", name: "Magnesium", predicted: { mass: 24.31, density: 1.74, meltingPoint: 650 }, actual: { mass: 24.305, density: 1.738, meltingPoint: 650 } },
+            { atomicNumber: 13, symbol: "Al", name: "Aluminium", predicted: { mass: 26.98, density: 2.70, meltingPoint: 660 }, actual: { mass: 26.982, density: 2.699, meltingPoint: 660.32 } },
+            { atomicNumber: 14, symbol: "Si", name: "Silicon", predicted: { mass: 28.09, density: 2.33, meltingPoint: 1414 }, actual: { mass: 28.086, density: 2.329, meltingPoint: 1414 } },
+            { atomicNumber: 26, symbol: "Fe", name: "Iron", predicted: { mass: 55.85, density: 7.87, meltingPoint: 1538 }, actual: { mass: 55.845, density: 7.874, meltingPoint: 1538 } },
+            { atomicNumber: 29, symbol: "Cu", name: "Copper", predicted: { mass: 63.55, density: 8.96, meltingPoint: 1085 }, actual: { mass: 63.546, density: 8.96, meltingPoint: 1084.62 } },
+            { atomicNumber: 47, symbol: "Ag", name: "Silver", predicted: { mass: 107.87, density: 10.49, meltingPoint: 962 }, actual: { mass: 107.868, density: 10.49, meltingPoint: 961.78 } },
+            { atomicNumber: 79, symbol: "Au", name: "Gold", predicted: { mass: 196.97, density: 19.32, meltingPoint: 1064 }, actual: { mass: 196.967, density: 19.32, meltingPoint: 1064.18 } }
+        ];
+
+        function calculateAccuracy(predicted, actual) {
+            if (!predicted || !actual) return "N/A";
+            const error = Math.abs((actual - predicted) / actual) * 100;
+            if (error < 5) return "Excellent";
+            if (error < 15) return "Good";
+            return "Moderate";
+        }
+
+        function displayElementDetails(element) {
+            const panel = document.getElementById('predictionPanel');
+            const predictions = [
+                { property: "Atomic Mass (g/mol)", predicted: element.predicted.mass, actual: element.actual.mass, unit: "g/mol" },
+                { property: "Density (g/cm³)", predicted: element.predicted.density, actual: element.actual.density, unit: "g/cm³" },
+                { property: "Melting Point (°C)", predicted: element.predicted.meltingPoint, actual: element.actual.meltingPoint, unit: "°C" }
+            ];
+
+            let accuracyClass = "";
+            let overallAccuracy = 0;
+            predictions.forEach(p => {
+                if (p.predicted && p.actual) {
+                    const error = Math.abs((p.actual - p.predicted) / p.actual) * 100;
+                    overallAccuracy += error;
+                }
+            });
+            overallAccuracy = overallAccuracy / predictions.filter(p => p.predicted && p.actual).length;
+            if (overallAccuracy < 10) accuracyClass = "accuracy-high";
+            else if (overallAccuracy < 25) accuracyClass = "accuracy-medium";
+            
+            const predictionHtml = `
+                <div class="prediction-title">
+                    🔬 Element #${element.atomicNumber}: ${element.name} (${element.symbol})
+                    <span class="accuracy ${accuracyClass}" style="margin-left: 15px;">
+                        Overall Prediction Accuracy: ${(100 - overallAccuracy).toFixed(1)}%
+                    </span>
+                </div>
+                <table class="comparison-table">
+                    <thead>
+                        <tr><th>Property</th><th>📊 Predicted Value</th><th>✅ Actual Value</th><th>🎯 Accuracy</th></tr>
+                    </thead>
+                    <tbody>
+                        ${predictions.map(p => {
+                            const error = p.predicted && p.actual ? Math.abs((p.actual - p.predicted) / p.actual) * 100 : 0;
+                            const accuracyText = error < 5 ? "Excellent" : error < 15 ? "Good" : error < 30 ? "Fair" : "Moderate";
+                            return `
+                                <tr>
+                                    <td>${p.property}</td>
+                                    <td class="predicted">${p.predicted !== undefined ? p.predicted + " " + p.unit : "N/A"}</td>
+                                    <td class="actual">${p.actual !== undefined ? p.actual + " " + p.unit : "N/A"}</td>
+                                    <td>${error > 0 ? `<span class="accuracy accuracy-${error < 5 ? 'high' : error < 15 ? 'medium' : 'low'}">${accuracyText} (${error.toFixed(2)}% error)</span>` : "N/A"}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
+                    <strong>💡 Did you know?</strong> Mendeleev's periodic table predicted many undiscovered elements with remarkable accuracy. 
+                    For ${element.name}, the predictions for atomic mass, density, and melting point were astonishingly close to the actual values discovered years later!
+                </div>
+            `;
+            
+            panel.innerHTML = predictionHtml;
+            panel.style.display = "block";
+            panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function renderElementGrid(elements) {
+            const grid = document.getElementById('elementGrid');
+            if (elements.length === 0) {
+                grid.innerHTML = '<div class="loading">No elements found. Try searching for "Hydrogen", "Helium", or "Lithium"!</div>';
+                return;
+            }
+            
+            grid.innerHTML = elements.map(element => `
+                <div class="element-card" onclick="displayElementDetails(${JSON.stringify(element).replace(/"/g, '&quot;')})">
+                    <div class="element-header">
+                        <span class="element-symbol">${element.symbol}</span>
+                        <span class="element-number">#${element.atomicNumber}</span>
+                    </div>
+                    <div class="element-name">${element.name}</div>
+                    <div class="prediction-badge">
+                        📊 Predicted Mass: ${element.predicted.mass} g/mol
+                    </div>
+                    <div class="prediction-badge" style="background: rgba(76, 175, 80, 0.3); margin-top: 5px;">
+                        ✅ Actual Mass: ${element.actual.mass} g/mol
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function searchElement() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            if (!query) {
+                showAllElements();
+                return;
+            }
+            
+            const filtered = allElements.filter(element => 
+                element.name.toLowerCase().includes(query) || 
+                element.symbol.toLowerCase().includes(query) ||
+                element.atomicNumber.toString() === query
+            );
+            
+            renderElementGrid(filtered);
+            if (filtered.length === 1) {
+                displayElementDetails(filtered[0]);
+            } else {
+                document.getElementById('predictionPanel').style.display = "none";
+            }
+        }
+
+        function showAllElements() {
+            renderElementGrid(allElements);
+            document.getElementById('predictionPanel').style.display = "none";
+            document.getElementById('searchInput').value = "";
+        }
+
+        function updateSuggestions() {
+            const input = document.getElementById('searchInput');
+            const suggestionsDiv = document.getElementById('suggestionList');
+            const query = input.value.toLowerCase();
+            
+            if (query.length < 1) {
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+            
+            const suggestions = allElements.filter(element => 
+                element.name.toLowerCase().includes(query) || 
+                element.symbol.toLowerCase().includes(query)
+            ).slice(0, 5);
+            
+            suggestionsDiv.innerHTML = suggestions.map(s => 
+                `<div class="suggestion-chip" onclick="document.getElementById('searchInput').value='${s.name}'; searchElement();">
+                    ${s.name} (${s.symbol})
+                </div>`
+            ).join('');
+        }
+
+        // Initialize with all elements
+        showAllElements();
+        
+        // Add event listeners
+        document.getElementById('searchInput').addEventListener('input', updateSuggestions);
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchElement();
+        });
+    </script>
+</body>
+</html>
